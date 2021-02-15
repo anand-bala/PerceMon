@@ -10,12 +10,36 @@ if(PERCEMON_MASTER_PROJECT OR NOT FETCHCONTENT_BASE_DIR)
   set(FETCHCONTENT_BASE_DIR ${fc_base})
 endif()
 
-# ##############################################################################
+# ######################################################################################
 # Core Dependencies
-# ##############################################################################
+# ######################################################################################
 
 unset(CMAKE_CXX_CLANG_TIDY)
 unset(CMAKE_CXX_INCLUDE_WHAT_YOU_USE)
+
+message(CHECK_START "Looking for Neargye/magic_enum")
+find_package(magic_enum QUIET)
+if(NOT magic_enum_FOUND)
+  message(CHECK_FAIL "system library not found (using fetched version).")
+  FetchContent_Declare(
+    magic_enum
+    GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
+    GIT_TAG 58833fa067361a769892149b27b06cf60d89bf46
+    GIT_PROGRESS ON
+  )
+
+  FetchContent_GetProperties(magic_enum)
+  if(NOT magic_enum_POPULATED)
+    FetchContent_Populate(magic_enum)
+    set(MAGIC_ENUM_OPT_INSTALL
+        ON
+        CACHE BOOL "Generate the install target for magic_enum." FORCE
+    )
+    add_subdirectory(${magic_enum_SOURCE_DIR} ${magic_enum_BINARY_DIR})
+  endif()
+else()
+  message(CHECK_PASS "system library found.")
+endif()
 
 message(CHECK_START "Looking for fmtlib/fmt")
 find_package(fmt QUIET)
@@ -68,7 +92,7 @@ if(NOT range-v3_FOUND)
   FetchContent_Declare(
     range-v3
     GIT_REPOSITORY https://github.com/ericniebler/range-v3.git
-    GIT_TAG d098b9610ac2f182f667ae9274ac2fac7f1327f5
+    GIT_TAG 0.11.0
     GIT_PROGRESS ON
   )
 
@@ -81,25 +105,23 @@ else()
   message(CHECK_PASS "system library found.")
 endif()
 
-# ##############################################################################
+# ######################################################################################
 # Python Bindings
-# ##############################################################################
+# ######################################################################################
 
 # if(BUILD_PYTHON_BINDINGS) message(CHECK_START "Looking for pybind11/pybind11")
-# find_package(pybind11 QUIET) if(NOT pybind11_FOUND) message(CHECK_FAIL "system
-# library not found (using fetched version).") FetchContent_Declare( pybind11
-# GIT_REPOSITORY https://github.com/pybind/pybind11.git GIT_TAG v2.6.1
-# GIT_PROGRESS ON )
+# find_package(pybind11 QUIET) if(NOT pybind11_FOUND) message(CHECK_FAIL "system library
+# not found (using fetched version).") FetchContent_Declare( pybind11 GIT_REPOSITORY
+# https://github.com/pybind/pybind11.git GIT_TAG v2.6.1 GIT_PROGRESS ON )
 #
 # FetchContent_GetProperties(pybind11) if(NOT pybind11_POPULATED)
-# FetchContent_Populate(pybind11) set(PYBIND11_INSTALL ON CACHE BOOL "Install
-# pybind11 header files" FORCE ) add_subdirectory(${pybind11_SOURCE_DIR}
-# ${pybind11_BINARY_DIR}) endif() else() message(CHECK_PASS "system library
-# found.") endif() endif()
+# FetchContent_Populate(pybind11) set(PYBIND11_INSTALL ON CACHE BOOL "Install pybind11
+# header files" FORCE ) add_subdirectory(${pybind11_SOURCE_DIR} ${pybind11_BINARY_DIR})
+# endif() else() message(CHECK_PASS "system library found.") endif() endif()
 
-# ##############################################################################
+# ######################################################################################
 # Testing Dependencies
-# ##############################################################################
+# ######################################################################################
 
 if(ENABLE_TESTING)
   message(CHECK_START "Looking for catchorg/Catch2")
@@ -125,9 +147,9 @@ if(ENABLE_TESTING)
   endif()
 endif()
 
-# ##############################################################################
+# ######################################################################################
 # Documentation dependencies
-# ##############################################################################
+# ######################################################################################
 
 function(get_mcss_repo mcss_dir)
   message(STATUS "Fetching mosra/m.css for documentation")

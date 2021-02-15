@@ -288,7 +288,12 @@ struct QuantifierExpression : peg::seq<quantifier_ops, Skip, VarList, Skip, Term
 struct Expression : peg::sor<
                         PinningExpression,
                         QuantifierExpression,
-                        peg::seq<QualifiedIdentifier, Skip, peg::list<Term, Skip>, Skip, peg::star<Attribute>>> {};
+                        peg::seq<
+                            QualifiedIdentifier,
+                            Skip,
+                            peg::list<Term, Skip>,
+                            Skip,
+                            peg::star<Attribute>>> {};
 struct Term : peg::sor<paren_surround<Expression>, Constant, QualifiedIdentifier> {};
 
 template <typename K, typename... S>

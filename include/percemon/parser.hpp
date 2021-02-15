@@ -1,8 +1,8 @@
 /// @file   PerceMon/parser.hpp
 /// @brief  Interface to the parser for the PerceMon specification language.
 ///
-/// Here, we define the general interface for parsing the PerceMon specification language
-/// from a string and from a file into a context.
+/// Here, we define the general interface for parsing the PerceMon specification
+/// language from a string and from a file into a context.
 
 #pragma once
 
@@ -67,6 +67,7 @@ struct Context {
   /// lose its meaning once you do.
   static std::unique_ptr<Context> from_file(const fs::path&);
 
+ private:
   /// Syntax settings.
   SyntaxSettings syntax_settings = SyntaxSettings::MIXED;
   /// List of defined formulas, keyed by their corresponding identifiers.

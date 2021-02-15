@@ -13,8 +13,8 @@
 /// Private namespace for the parser core.
 namespace {
 
-namespace gm         = argus::grammar;
-namespace parse_tree = argus::parser::parse_tree;
+namespace gm         = percemon::grammar;
+namespace parse_tree = percemon::parser::parse_tree;
 namespace peg        = tao::pegtl;
 
 /// This function takes in some PEGTL compliant input and outputs a concrete context.
@@ -23,7 +23,7 @@ namespace peg        = tao::pegtl;
 /// generator. Then, it transforms this parse_tree into the concrete context with the
 /// abstract syntax tree.
 template <typename ParseInput>
-std::unique_ptr<argus::Context> _parse(ParseInput&& input) {
+std::unique_ptr<percemon::Context> _parse(ParseInput&& input) {
   if (auto root =
           peg::parse_tree::parse<gm::Specification, parse_tree::Selector>(input)) {
     auto parsed_ctx = parse_tree::transform(std::move(root));
@@ -33,7 +33,7 @@ std::unique_ptr<argus::Context> _parse(ParseInput&& input) {
 
 } // namespace
 
-namespace argus {
+namespace percemon {
 std::unique_ptr<Context> Context::from_string(std::string_view input) {
   tao::pegtl::string_input in(input, "from_content");
   return _parse(in);
@@ -44,4 +44,4 @@ std::unique_ptr<Context> Context::from_file(const fs::path& input) {
   return _parse(in);
 }
 
-} // namespace argus
+} // namespace percemon

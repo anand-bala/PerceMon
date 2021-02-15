@@ -9,6 +9,8 @@
 /// relational operations (as they are the smallest non-Constant boolean expressions),
 /// but they do include arithmetic operations (`+, -, /, *`), and any other mathematical
 /// operations supported by the semantics.
+///
+/// We also define the AST node for pinning operations `(@ x f)`.
 
 #pragma once
 #ifndef PERCEMON_AST_DETAILS_FUNCTIONS
@@ -53,6 +55,12 @@ struct Function {
   std::vector<std::shared_ptr<Expr>> args;
 
   std::set<std::string> attributes;
+};
+
+/// @brief Pinned time and frame variables
+struct PinnedFrame {
+  std::shared_ptr<Expr> time_var  = nullptr;
+  std::shared_ptr<Expr> frame_var = nullptr;
 };
 
 } // namespace percemon::ast::details

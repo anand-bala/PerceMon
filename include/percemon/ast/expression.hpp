@@ -33,6 +33,7 @@ using ExprVariant = std::variant<
     PredicateOp,
     LogicalOp,
     QuantifierOp,
+    PinnedFrame,
     SpatialOp,
     SpatialQuantifier,
     SpatioTemporalOp>;
@@ -180,39 +181,44 @@ struct Expr : ast::details::ExprVariant {
   template <typename ExprPtrContainer>
   static std::unique_ptr<Expr> Fills(ExprPtrContainer vars, std::shared_ptr<Expr> arg);
 
-  /// @brief Next temporal operator
-  static std::unique_ptr<Expr> Next(std::shared_ptr<Expr> arg);
+  /// @brief Spatio-temporal Next operator
+  static std::unique_ptr<Expr> SpatialNext(std::shared_ptr<Expr> arg);
 
-  /// @brief Previous temporal operator
-  static std::unique_ptr<Expr> Previous(std::shared_ptr<Expr> arg);
+  /// @brief Previous spatio-temporal operator
+  static std::unique_ptr<Expr> SpatialPrevious(std::shared_ptr<Expr> arg);
 
-  /// @brief Eventually temporal operator
+  /// @brief Eventually spatio-temporal operator
+  static std::unique_ptr<Expr> SpatialEventually(
+      std::shared_ptr<Expr> arg,
+      std::shared_ptr<Expr> interval = nullptr);
+
+  /// @brief Once spatio-temporal operator
   static std::unique_ptr<Expr>
-  Eventually(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
+  SpatialOnce(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
 
-  /// @brief Once temporal operator
+  /// @brief Always spatio-temporal operator
   static std::unique_ptr<Expr>
-  Once(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
+  SpatialAlways(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
 
-  /// @brief Always temporal operator
-  static std::unique_ptr<Expr>
-  Always(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
+  /// @brief Historically spatio-temporal operator
+  static std::unique_ptr<Expr> SpatialHistorically(
+      std::shared_ptr<Expr> arg,
+      std::shared_ptr<Expr> interval = nullptr);
 
-  /// @brief Historically temporal operator
-  static std::unique_ptr<Expr>
-  Historically(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
-
-  /// @brief Until temporal operator
-  static std::unique_ptr<Expr> Until(
+  /// @brief Until spatio-temporal operator
+  static std::unique_ptr<Expr> SpatialUntil(
       std::shared_ptr<Expr> arg1,
       std::shared_ptr<Expr> arg2,
       std::shared_ptr<Expr> interval = nullptr);
 
-  /// @brief Since temporal operator
-  static std::unique_ptr<Expr> Since(
+  /// @brief Since spatio-temporal operator
+  static std::unique_ptr<Expr> SpatialSince(
       std::shared_ptr<Expr> arg1,
       std::shared_ptr<Expr> arg2,
       std::shared_ptr<Expr> interval = nullptr);
+
+  /// @brief Check if the expression is a valid STQL formula
+  [[nodiscard]] bool is_valid() const;
 
  private:
   /// @brief The unique ID for an expression

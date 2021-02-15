@@ -1,5 +1,5 @@
 message(STATUS "Building Tests in ${CMAKE_CURRENT_LIST_DIR}")
-include(Catch)
+# include(Catch)
 
 set(TEST_SRCS test_ast.cc test_percemon.cc)
 

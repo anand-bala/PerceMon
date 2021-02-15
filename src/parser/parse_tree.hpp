@@ -1,48 +1,17 @@
-
 #pragma once
 
-#include "grammar.hpp"
 #ifndef PERCEMON_PARSER_PARSE_TREE_HPP
 #define PERCEMON_PARSER_PARSE_TREE_HPP
 
+#include <map>         // for map
 #include <memory>      // for unique_ptr
+#include <set>         // for set
 #include <type_traits> // for true_type, false_type
 
+#include "grammar.hpp"
+
 namespace percemon {
-struct Context;
-
-namespace grammar {
-struct Specification;
-struct StatementList;
-struct CmdMonitor;
-struct CmdDefineFormula;
-struct CmdSetOption;
-struct Term;
-struct Expression;
-struct QuantifierExpression;
-struct VarDecl;
-struct VarType;
-struct QualifiedIdentifier;
-struct Attribute;
-struct KeyValueAttribute;
-struct OptionAttribute;
-struct SExpression;
-struct ParenExpr;
-struct Constant;
-struct Keyword;
-struct Symbol;
-struct QuotedSymbol;
-struct SimpleSymbol;
-struct StringLiteral;
-struct BooleanLiteral;
-struct DoubleLiteral;
-struct IntegerLiteral;
-struct DecInt;
-struct HexInt;
-struct OctInt;
-struct BinInt;
-} // namespace grammar
-
+struct Expr;
 } // namespace percemon
 
 namespace tao::pegtl::parse_tree {
@@ -85,8 +54,21 @@ template <> struct Selector<gm::StatementList>      : std::true_type {};
 template <> struct Selector<gm::Specification>      : std::true_type {};
 // clang-format on
 
-std::unique_ptr<percemon::Context>
-    transform(std::unique_ptr<tao::pegtl::parse_tree::node>);
+struct ParseContext {
+  /// Creates a look-up table that maks parsed string contents to Expressions. Allows
+  /// for reusing previously parsed expressions.
+  std::map<std::string, std::shared_ptr<Expr>> lut;
+
+  std::set<std::string> symbols;
+  std::map<std::string, std::shared_ptr<Expr>> variables;
+
+  /// List of defined formulas, keyed by their corresponding identifiers.
+  std::map<std::string, std::shared_ptr<Expr>> defined_formulas;
+  /// List of settings for monitors, keyed by their corresponding identifiers.
+  std::map<std::string, std::shared_ptr<Expr>> monitors;
+};
+
+std::unique_ptr<ParseContext> transform(std::unique_ptr<tao::pegtl::parse_tree::node>);
 
 } // namespace percemon::parser::parse_tree
 
