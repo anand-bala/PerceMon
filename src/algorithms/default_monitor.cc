@@ -12,6 +12,7 @@
 #include <itertools.hpp>
 #include <map>
 #include <numeric>
+#include <stdexcept>
 
 using namespace percemon;
 using namespace percemon::monitoring;

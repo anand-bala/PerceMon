@@ -4,6 +4,7 @@
 #define __PERCEMON_AST_FUNCTIONS_HPP__
 
 #include "percemon/ast/primitives.hpp"
+#include <stdexcept>
 
 namespace percemon::ast::functions {
 

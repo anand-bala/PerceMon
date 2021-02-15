@@ -1,26 +1,79 @@
-.clangd/
+.cache/
+.deps/
+coverage.info
 .ccls-cache/
-# Created by https://www.toptal.com/developers/gitignore/api/c++,python,cmake,gcov
-# Edit at https://www.toptal.com/developers/gitignore?templates=c++,python,cmake,gcov
+.clangd/
 
-### C++ ###
+# Created by https://www.toptal.com/developers/gitignore/api/c,c++,python,cmake,ninja
+# Edit at https://www.toptal.com/developers/gitignore?templates=c,c++,python,cmake,ninja
+
+### C ###
 # Prerequisites
 *.d
 
-# Compiled Object files
-*.slo
-*.lo
+# Object files
 *.o
+*.ko
 *.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
 
 # Precompiled Headers
 *.gch
 *.pch
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
 *.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
+
+### C++ ###
+# Prerequisites
+
+# Compiled Object files
+*.slo
+
+# Precompiled Headers
+
+# Linker files
+
+# Debugger Files
+
+# Compiled Dynamic libraries
 
 # Fortran module files
 *.mod
@@ -28,14 +81,8 @@
 
 # Compiled Static libraries
 *.lai
-*.la
-*.a
-*.lib
 
 # Executables
-*.exe
-*.out
-*.app
 
 ### CMake ###
 CMakeLists.txt.user
@@ -49,17 +96,15 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+CMakeUserPresets.json
 
 ### CMake Patch ###
 # External projects
 *-prefix/
 
-### Gcov ###
-# gcc coverage testing tool files
-
-*.gcno
-*.gcda
-*.gcov
+### Ninja ###
+.ninja_deps
+.ninja_log
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
@@ -113,6 +158,7 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+pytestdebug.log
 
 # Translations
 *.mo
@@ -133,6 +179,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+doc/_build/
 
 # PyBuilder
 target/
@@ -172,6 +219,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+pythonenv*
 
 # Spyder project settings
 .spyderproject
@@ -194,4 +242,7 @@ dmypy.json
 # pytype static type analyzer
 .pytype/
 
-# End of https://www.toptal.com/developers/gitignore/api/c++,python,cmake,gcov
+# profiling data
+.prof
+
+# End of https://www.toptal.com/developers/gitignore/api/c,c++,python,cmake,ninja

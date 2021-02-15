@@ -9,7 +9,7 @@
 #include <variant>
 #include <vector>
 
-#include <exception>
+#include <stdexcept>
 
 #include "percemon/ast/ast.hpp"
 

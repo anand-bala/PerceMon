@@ -1,4 +1,5 @@
 #include <catch2/catch.hpp>
+#include <stdexcept>
 
 #include "percemon/ast.hpp"
 #include "percemon/fmt.hpp"

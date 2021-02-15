@@ -6,7 +6,10 @@
 #include <optional>
 #include <variant>
 
+#include <stdexcept>
+
 #include "percemon/utils.hpp"
+
 
 using namespace percemon::ast;
 namespace utils = percemon::utils;
