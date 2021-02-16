@@ -6,6 +6,7 @@ target_link_libraries(percemon_ast PUBLIC fmt::fmt)
 # Parser sources
 add_percemon_component(
   percemon_parser
+  parser/actions.hpp
   parser/error_messages.hpp
   parser/parser.cc
   parser/grammar.cc

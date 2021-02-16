@@ -247,7 +247,7 @@ struct Constant
     : peg::sor<DoubleLiteral, IntegerLiteral, BooleanLiteral, StringLiteral> {};
 
 struct ParenExpr : peg::if_must<sym::lparen, SExpression, sym::rparen> {};
-struct SExpression : peg::sor<Constant, Symbol, Keyword, ParenExpr> {};
+struct SExpression : peg::sor<Constant, Symbol, ParenExpr> {};
 
 /// Attributes are generally pairs consisting of an attribute name and an
 /// associated value, although attributes with no value are also allowed.

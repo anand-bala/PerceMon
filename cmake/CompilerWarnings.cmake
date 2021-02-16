@@ -18,16 +18,11 @@ function(set_project_warnings project_name)
   set(CLANG_WARNINGS
       -Wall
       -Wextra # reasonable and standard
-      -Wshadow # warn the user if a variable declaration shadows one from a
-               # parent context
-      -Wnon-virtual-dtor # warn the user if a class with virtual functions has a
-                         # non-virtual destructor. This helps catch hard to
-                         # track down memory errors
-      -Wold-style-cast # warn for c-style casts
-      -Wunused # warn on anything being unused
+      -Wshadow # warn the user if a variable declaration shadows one from a parent
+               # context
       -Wpedantic # warn if non-standard C++ is used
-      -Wformat=2 # warn on security issues around functions that format output
-                 # (ie printf)
+      -Wformat=2 # warn on security issues around functions that format output (ie
+                 # printf)
   )
 
   if(WARNINGS_AS_ERRORS)
@@ -45,8 +40,7 @@ function(set_project_warnings project_name)
     set(PROJECT_WARNINGS ${GCC_WARNINGS})
   else()
     message(
-      AUTHOR_WARNING
-        "No compiler warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler."
+      AUTHOR_WARNING "No compiler warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler."
     )
   endif()
 

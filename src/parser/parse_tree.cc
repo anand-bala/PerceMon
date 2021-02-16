@@ -43,7 +43,7 @@ std::string get_symbol(const NodePtr& node, ParseContext& stack) {
   auto content_rng = node->string_view() |
                      ranges::views::trim([=](char c) { return is_quoted && c == '|'; });
 
-  std::string symbol = ranges::to<std::string>(content_rng);
+  auto symbol = ranges::to<std::string>(content_rng);
   stack.symbols.insert(symbol);
   return symbol;
 }
@@ -117,7 +117,9 @@ percemon::ExprPtr get_expr(const NodePtr& node, ParseContext& stack) {
   auto it        = std::next(children.cbegin());
 
   std::vector<percemon::ExprPtr> terms;
-  for (; it != children.cend() && (*it)->is_type<gm::Term>(); it++) {}
+  for (; it != children.cend() && (*it)->is_type<gm::Term>(); it++) {
+    
+  }
   utils::assert_(std::size(terms) >= 1, "Function must have at least 1 operand");
   return expr;
 }
@@ -133,8 +135,8 @@ percemon::ExprPtr get_term(const NodePtr& node, ParseContext& stack) {
     if (lut_it != stack.lut.end()) {
       term = lut_it->second;
     } else {
-      throw peg::parse_error(
-          fmt::format("Reference to undefined symbol {}", symbol), node->begin());
+      // TODO(anand): Assume it is a variable. Infer type later.
+      term = percemon::Expr::Variable<percemon::ast::VarType::Unknown>(symbol);
     }
   } else if (child->is_type<gm::Constant>()) {
     term = get_const(child, stack);

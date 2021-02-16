@@ -69,6 +69,10 @@ struct Expr : ast::details::ExprVariant {
   /// @brief Create a variable with a custom type.
   template <typename T>
   static std::unique_ptr<Expr> Variable(std::string name, std::string type);
+  /// @brief Create a variable with a known type.
+  template <ast::VarType T>
+  static std::unique_ptr<Expr> Variable(std::string name);
+
 
   /// @brief Create a pre-defined function, with given arguments and attributes
   template <typename ExprPtrContainer, typename AttrContainer>

@@ -67,7 +67,6 @@ struct Context {
   /// lose its meaning once you do.
   static std::unique_ptr<Context> from_file(const fs::path&);
 
- private:
   /// Syntax settings.
   SyntaxSettings syntax_settings = SyntaxSettings::MIXED;
   /// List of defined formulas, keyed by their corresponding identifiers.

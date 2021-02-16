@@ -12,9 +12,11 @@
 
 namespace percemon::ast::details {
 
+using primitive_types = std::variant<bool, long int, double, std::string>;
+
 /// @brief Node that holds a constant value: boolean, integer, double, or some string.
-struct Constant : std::variant<bool, int, double, std::string> {
-  using std::variant<bool, int, double, std::string>::variant;
+struct Constant : primitive_types {
+  using primitive_types::variant;
 
   /// Convenience method to check if the constant is a `bool`.
   [[nodiscard]] constexpr bool is_bool() const {
@@ -28,7 +30,7 @@ struct Constant : std::variant<bool, int, double, std::string> {
 
   /// Convenience method to check if the constant is a `int`.
   [[nodiscard]] constexpr bool is_integer() const {
-    return std::holds_alternative<int>(*this);
+    return std::holds_alternative<long int>(*this);
   }
 
   /// Convenience method to check if the constant is a `string`.
@@ -50,6 +52,7 @@ struct Variable {
     Int,
     Bool,
     Custom,
+    Unknown, // Used when we need to infer the type later.
   };
   // namespace percemon::ast::details
   /// The name of the variable (some qualified identifier).
