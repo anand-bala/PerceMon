@@ -23,12 +23,9 @@
 #include <string>
 #include <vector>
 
-// Forward-declare Expr
-namespace percemon {
-struct Expr;
-} // namespace percemon
+#include "percemon/ast/ast_fwd.hpp"
 
-namespace percemon::ast::details {
+namespace PERCEMON_AST_NS {
 
 /// @brief Functions on `Constant`s, `Variable`s, and other `Function`s.
 ///
@@ -51,18 +48,38 @@ struct Function {
   };
 
   Type fn;
+  std::vector<ExprPtr> args;
   std::optional<std::string> custom_fn;
-  std::vector<std::shared_ptr<Expr>> args;
 
-  std::set<std::string> attributes;
+  std::set<std::string> attrs;
+
+  Function(Type op, std::vector<ExprPtr> operands, std::set<std::string> attributes) :
+      fn{op}, args{std::move(operands)}, attrs{std::move(attributes)} {}
+
+  Function(
+      std::string op,
+      std::vector<ExprPtr> operands,
+      std::set<std::string> attributes) :
+      fn{Type::Custom},
+      args{std::move(operands)},
+      custom_fn{std::move(op)},
+      attrs{std::move(attributes)} {}
 };
 
 /// @brief Pinned time and frame variables
 struct PinnedFrame {
-  std::shared_ptr<Expr> time_var  = nullptr;
-  std::shared_ptr<Expr> frame_var = nullptr;
+  ExprPtr time_var  = nullptr;
+  ExprPtr frame_var = nullptr;
 };
 
-} // namespace percemon::ast::details
+/// @brief Interval constraint holder.
+///
+/// An interval is essentially some boolean function on functions, constants, and
+/// primitives.
+struct Interval {
+  ExprPtr interval = nullptr;
+};
+
+} // namespace PERCEMON_AST_NS
 
 #endif /* end of include guard: PERCEMON_AST_DETAILS_FUNCTIONS */

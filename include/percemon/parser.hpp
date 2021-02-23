@@ -15,14 +15,10 @@
 #include <string>
 #include <string_view>
 
+#include "percemon/ast/ast_fwd.hpp"
 #include "percemon/internal/filesystem.hpp"
 
 namespace percemon {
-
-// Forward Declaration for Expr (holds valid expressions).
-struct Expr;
-
-using ExprPtr = std::shared_ptr<Expr>;
 
 // Forward Declaration for MonitorConfig (holds necessary information to build monitors
 // for different formulas).

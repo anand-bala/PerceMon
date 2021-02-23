@@ -20,16 +20,19 @@ assert_([[maybe_unused]] bool condition, [[maybe_unused]] const std::string& msg
 }
 
 [[noreturn]] inline void unreachable() {
-  do {
-    assert_(false, "Unreachable code!");
+  assert_(false, "Unreachable code!");
 #ifdef _MSC_VER
-    __assume(false);
+  __assume(false);
 #elif defined(__clang__) || defined(__GNUC__) || defined(__INTEL_COMPILER)
-    __builtin_unreachable();
+  __builtin_unreachable();
 #else
-    abort();
+  abort();
 #endif
-  } while (false);
+}
+
+[[noreturn]] inline void unreachable(std::string_view msg) {
+  std::cerr << "Unreachable: " << msg << std::endl;
+  unreachable();
 }
 
 } // namespace utils

@@ -1,21 +1,21 @@
 # AST sources
-add_percemon_component(percemon_ast ast/ast.cc)
+add_percemon_component(percemon_ast ast/expression.cc)
 target_include_directories(percemon_ast PRIVATE ${CMAKE_CURRENT_LIST_DIR}/ast)
-target_link_libraries(percemon_ast PUBLIC fmt::fmt)
+target_link_libraries(percemon_ast PUBLIC fmt::fmt magic_enum::magic_enum)
 
 # Parser sources
 add_percemon_component(
   percemon_parser
-  parser/actions.hpp
   parser/error_messages.hpp
-  parser/parser.cc
-  parser/grammar.cc
   parser/grammar.hpp
-  parser/parse_tree.cc
-  parser/parse_tree.hpp
+  parser/parser.cc
+  # parser/parse_tree.hpp parser/parse_tree.cc
+  parser/actions.hpp
+  parser/grammar.cc
+  parser/var_lookup.cc
 )
 target_include_directories(percemon_parser PRIVATE ${CMAKE_CURRENT_LIST_DIR}/parser)
-target_link_libraries(percemon_parser PRIVATE taocpp::pegtl range-v3::range-v3)
+target_link_libraries(percemon_parser PRIVATE taocpp::pegtl magic_enum::magic_enum)
 target_link_libraries(percemon_parser PUBLIC fmt::fmt)
 set_std_filesystem_options(percemon_parser)
 

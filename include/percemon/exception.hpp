@@ -10,16 +10,16 @@ namespace percemon {
 
 struct not_implemented_error : public std::exception {
  private:
-  const std::string what_arg;
+  const std::string m_what_arg;
 
  public:
-  not_implemented_error(const std::string& what_arg) : what_arg{what_arg} {}
-  not_implemented_error(const char* what_arg) : what_arg{what_arg} {}
+  not_implemented_error(std::string what_arg) : m_what_arg{std::move(what_arg)} {}
+  not_implemented_error(const char* what_arg) : m_what_arg{what_arg} {}
 
   not_implemented_error(const not_implemented_error& other) noexcept = default;
 
-  virtual const char* what() const noexcept {
-    return this->what_arg.c_str();
+  [[nodiscard]] const char* what() const noexcept override {
+    return m_what_arg.c_str();
   }
 };
 

@@ -9,6 +9,8 @@
 #include <memory>
 #include <variant>
 
+#include "percemon/ast/ast_fwd.hpp"
+
 // IWYU pragma: begin_exports
 #include "percemon/ast/details/functions.hpp"
 #include "percemon/ast/details/primitives.hpp"
@@ -16,8 +18,6 @@
 #include "percemon/ast/details/spatial.hpp"
 #include "percemon/ast/details/temporal.hpp"
 // IWYU pragma: end_exports
-
-#define PERCEMON_AST_NS percemon::ast::details
 
 namespace percemon {
 namespace ast {
@@ -34,11 +34,15 @@ using ExprVariant = std::variant<
     LogicalOp,
     QuantifierOp,
     PinnedFrame,
+    TemporalOp,
     SpatialOp,
     SpatialQuantifier,
     SpatioTemporalOp>;
 } // namespace details
 } // namespace ast
+
+using ExprPtrContainer = std::vector<ExprPtr>;
+using AttrContainer    = std::set<std::string>;
 
 /// @brief The overarching expression type.
 ///
@@ -63,163 +67,169 @@ struct Expr : ast::details::ExprVariant {
   static std::unique_ptr<Expr> Var_f(std::string name);
   /// @brief Create a Timepoint variable with the given name
   static std::unique_ptr<Expr> Var_t(std::string name);
-  /// @brief Create a variable of the given primitive type (`double`, `int` or`bool`)
-  template <typename T>
-  static std::unique_ptr<Expr> Variable(std::string name);
-  /// @brief Create a variable with a custom type.
-  template <typename T>
+  /// @brief Create a variable with a string type.
   static std::unique_ptr<Expr> Variable(std::string name, std::string type);
   /// @brief Create a variable with a known type.
-  template <ast::VarType T>
-  static std::unique_ptr<Expr> Variable(std::string name);
-
+  static std::unique_ptr<Expr> Variable(std::string name, ast::VarType type);
 
   /// @brief Create a pre-defined function, with given arguments and attributes
-  template <typename ExprPtrContainer, typename AttrContainer>
   static std::unique_ptr<Expr>
   Function(ast::FnType op, ExprPtrContainer args, AttrContainer attrs);
 
   /// @brief Create a custom function, with given arguments and attributes
-  template <typename ExprPtrContainer, typename AttrContainer>
   static std::unique_ptr<Expr>
   Function(std::string op, ExprPtrContainer args, AttrContainer attrs);
 
   /// @brief Create a Equality predicate
-  static std::unique_ptr<Expr> Eq(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs);
+  static std::unique_ptr<Expr> Eq(ExprPtr lhs, ExprPtr rhs);
+
+  /// @brief Create a Not-Equality predicate
+  static std::unique_ptr<Expr> Neq(ExprPtr lhs, ExprPtr rhs);
 
   /// @brief Create a Less Than predicate
-  static std::unique_ptr<Expr> Lt(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs);
+  static std::unique_ptr<Expr> Lt(ExprPtr lhs, ExprPtr rhs);
 
   /// @brief Create a Less Than or Equal predicate
-  static std::unique_ptr<Expr> Le(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs);
+  static std::unique_ptr<Expr> Le(ExprPtr lhs, ExprPtr rhs);
 
   /// @brief Create a Greater Than predicate
-  static std::unique_ptr<Expr> Gt(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs);
+  static std::unique_ptr<Expr> Gt(ExprPtr lhs, ExprPtr rhs);
 
   /// @brief Create a Greater Than or Equal predicate
-  static std::unique_ptr<Expr> Ge(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs);
+  static std::unique_ptr<Expr> Ge(ExprPtr lhs, ExprPtr rhs);
 
   /// @brief Create a Logical Negation
-  static std::unique_ptr<Expr> Not(std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> Not(ExprPtr arg);
 
   /// @brief Create a Logical And operation
-  template <typename ExprPtrContainer>
   static std::unique_ptr<Expr> And(ExprPtrContainer arg);
 
   /// @brief Create a Logical Or operation
-  template <typename ExprPtrContainer>
   static std::unique_ptr<Expr> Or(ExprPtrContainer arg);
 
   /// @brief Create a Logical Implication
-  static std::unique_ptr<Expr>
-  Implies(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs);
+  static std::unique_ptr<Expr> Implies(ExprPtr lhs, ExprPtr rhs);
 
   /// @brief Create a Logical Implication
-  static std::unique_ptr<Expr>
-  Xor(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs);
+  static std::unique_ptr<Expr> Xor(ExprPtr lhs, ExprPtr rhs);
 
   /// @brief Create a Logical Implication
-  static std::unique_ptr<Expr>
-  Iff(std::shared_ptr<Expr> lhs, std::shared_ptr<Expr> rhs);
+  static std::unique_ptr<Expr> Iff(ExprPtr lhs, ExprPtr rhs);
 
   /// @brief Create an Existential quantifier
-  template <typename ExprPtrContainer>
-  static std::unique_ptr<Expr> Exists(ExprPtrContainer vars, std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> Exists(ExprPtrContainer vars, ExprPtr arg);
 
   /// @brief Create an Universal quantifier
-  template <typename ExprPtrContainer>
-  static std::unique_ptr<Expr> Forall(ExprPtrContainer vars, std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> Forall(ExprPtrContainer vars, ExprPtr arg);
 
   /// @brief Next temporal operator
-  static std::unique_ptr<Expr> Next(std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> Next(ExprPtr arg);
 
   /// @brief Previous temporal operator
-  static std::unique_ptr<Expr> Previous(std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> Previous(ExprPtr arg);
 
   /// @brief Eventually temporal operator
-  static std::unique_ptr<Expr>
-  Eventually(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr> Eventually(ExprPtr arg, ExprPtr interval = nullptr);
 
   /// @brief Once temporal operator
-  static std::unique_ptr<Expr>
-  Once(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr> Once(ExprPtr arg, ExprPtr interval = nullptr);
 
   /// @brief Always temporal operator
-  static std::unique_ptr<Expr>
-  Always(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr> Always(ExprPtr arg, ExprPtr interval = nullptr);
 
   /// @brief Historically temporal operator
-  static std::unique_ptr<Expr>
-  Historically(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr> Historically(ExprPtr arg, ExprPtr interval = nullptr);
 
   /// @brief Until temporal operator
-  static std::unique_ptr<Expr> Until(
-      std::shared_ptr<Expr> arg1,
-      std::shared_ptr<Expr> arg2,
-      std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr>
+  Until(ExprPtr arg1, ExprPtr arg2, ExprPtr interval = nullptr);
 
   /// @brief Since temporal operator
-  static std::unique_ptr<Expr> Since(
-      std::shared_ptr<Expr> arg1,
-      std::shared_ptr<Expr> arg2,
-      std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr>
+  Since(ExprPtr arg1, ExprPtr arg2, ExprPtr interval = nullptr);
 
   // SpatialOp,
   /// @brief Complement a topological object
-  static std::unique_ptr<Expr> Complement(std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> Complement(ExprPtr arg);
 
   /// @brief Create a spatial union operation
-  template <typename ExprPtrContainer>
   static std::unique_ptr<Expr> Union(ExprPtrContainer arg);
 
   /// @brief Create a spatial intersection operation
-  template <typename ExprPtrContainer>
   static std::unique_ptr<Expr> Intersect(ExprPtrContainer arg);
 
   /// @brief Create a spatial extential quantifier
-  template <typename ExprPtrContainer>
-  static std::unique_ptr<Expr>
-  NotEmpty(ExprPtrContainer vars, std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> NotEmpty(ExprPtr arg);
 
   /// @brief Create a spatial universal quantifier
-  template <typename ExprPtrContainer>
-  static std::unique_ptr<Expr> Fills(ExprPtrContainer vars, std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> Fills(ExprPtr arg);
 
   /// @brief Spatio-temporal Next operator
-  static std::unique_ptr<Expr> SpatialNext(std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> SpatialNext(ExprPtr arg);
 
   /// @brief Previous spatio-temporal operator
-  static std::unique_ptr<Expr> SpatialPrevious(std::shared_ptr<Expr> arg);
+  static std::unique_ptr<Expr> SpatialPrevious(ExprPtr arg);
 
   /// @brief Eventually spatio-temporal operator
-  static std::unique_ptr<Expr> SpatialEventually(
-      std::shared_ptr<Expr> arg,
-      std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr>
+  SpatialEventually(ExprPtr arg, ExprPtr interval = nullptr);
 
   /// @brief Once spatio-temporal operator
-  static std::unique_ptr<Expr>
-  SpatialOnce(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr> SpatialOnce(ExprPtr arg, ExprPtr interval = nullptr);
 
   /// @brief Always spatio-temporal operator
-  static std::unique_ptr<Expr>
-  SpatialAlways(std::shared_ptr<Expr> arg, std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr> SpatialAlways(ExprPtr arg, ExprPtr interval = nullptr);
 
   /// @brief Historically spatio-temporal operator
-  static std::unique_ptr<Expr> SpatialHistorically(
-      std::shared_ptr<Expr> arg,
-      std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr>
+  SpatialHistorically(ExprPtr arg, ExprPtr interval = nullptr);
 
   /// @brief Until spatio-temporal operator
-  static std::unique_ptr<Expr> SpatialUntil(
-      std::shared_ptr<Expr> arg1,
-      std::shared_ptr<Expr> arg2,
-      std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr>
+  SpatialUntil(ExprPtr arg1, ExprPtr arg2, ExprPtr interval = nullptr);
 
   /// @brief Since spatio-temporal operator
-  static std::unique_ptr<Expr> SpatialSince(
-      std::shared_ptr<Expr> arg1,
-      std::shared_ptr<Expr> arg2,
-      std::shared_ptr<Expr> interval = nullptr);
+  static std::unique_ptr<Expr>
+  SpatialSince(ExprPtr arg1, ExprPtr arg2, ExprPtr interval = nullptr);
+
+  /// @brief Create a pinned frame and time variable.
+  static std::unique_ptr<Expr> PinAt(ExprPtr time_var, ExprPtr frame_var);
+
+  /// @brief Create a pinned frame.
+  static std::unique_ptr<Expr> PinAtFrame(ExprPtr frame_var);
+
+  /// @brief Create a pinned frame.
+  static std::unique_ptr<Expr> PinAtTime(ExprPtr time_var);
+
+  /// @brief Distance between two topological surfaces
+  static std::unique_ptr<Expr> Dist(ExprPtr x, ExprPtr y, AttrContainer attrs);
+
+  /// @brief Offset of a topological structure
+  static std::unique_ptr<Expr> Offset(ExprPtr arg, AttrContainer attrs);
+
+  /// @brief Class of an object
+  static std::unique_ptr<Expr> Class(ExprPtr obj);
+
+  /// @brief Confidence of an object detection
+  static std::unique_ptr<Expr> Prob(ExprPtr obj);
+
+  /// @brief Area of a topological structure
+  static std::unique_ptr<Expr> Area(ExprPtr obj);
+
+  /// @brief Bounding Box associated with an object
+  static std::unique_ptr<Expr> BBox(ExprPtr obj);
+
+  /// @brief Create an Addition AST
+  static std::unique_ptr<Expr> Add(ExprPtrContainer args);
+
+  /// @brief Create an Multiplication AST
+  static std::unique_ptr<Expr> Mul(ExprPtrContainer args);
+
+  /// @brief Create an Subtraction AST
+  static std::unique_ptr<Expr> Subtract(ExprPtr lhs, ExprPtr rhs);
+
+  /// @brief Create an Division AST
+  static std::unique_ptr<Expr> Div(ExprPtr numerator, ExprPtr denominator);
 
   /// @brief Check if the expression is a valid STQL formula
   [[nodiscard]] bool is_valid() const;
@@ -230,9 +240,13 @@ struct Expr : ast::details::ExprVariant {
   /// The ID of the Expr is used to create look-up tables within contexts, allowing for
   /// efficient use of the
   size_t id;
+
+  /// Private factory function.
+  template <typename ExprType>
+  static std::unique_ptr<Expr> make_expr(ExprType);
 };
 
-using ExprPtr = std::shared_ptr<Expr>;
+using ExprPtr = ExprPtr;
 } // namespace percemon
 
 #endif /* end of include guard: PERCEMON_AST_EXPRESSION */

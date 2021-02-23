@@ -16,12 +16,9 @@
 #include <string>
 #include <vector>
 
-// Forward-declare Expr
-namespace percemon {
-struct Expr;
-} // namespace percemon
+#include "percemon/ast/ast_fwd.hpp"
 
-namespace percemon::ast::details {
+namespace PERCEMON_AST_NS {
 
 /// @brief AST node for relational operations/predicates
 ///
@@ -32,7 +29,7 @@ struct PredicateOp {
   enum struct Type { LE, LT, GE, GT, EQ, NE };
 
   Type op;
-  std::shared_ptr<Expr> lhs, rhs;
+  ExprPtr lhs, rhs;
 };
 
 /// @brief Generic AST node for all propositional operations.
@@ -40,7 +37,7 @@ struct LogicalOp {
   enum struct Type { Not, And, Or };
 
   Type op;
-  std::vector<std::shared_ptr<Expr>> args;
+  std::vector<ExprPtr> args;
 };
 
 /// @brief Quantifier expressions
@@ -48,10 +45,10 @@ struct QuantifierOp {
   enum struct Type { Exists, Forall };
 
   Type op;
-  std::vector<std::shared_ptr<Expr>> vars;
-  std::shared_ptr<Expr> arg;
+  std::vector<ExprPtr> vars;
+  ExprPtr arg;
 };
 
-} // namespace percemon::ast::details
+} // namespace PERCEMON_AST_NS
 
 #endif /* end of include guard: PERCEMON_AST_DETAILS_PROPOSITIONAL */

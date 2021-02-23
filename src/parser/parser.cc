@@ -1,21 +1,25 @@
 #include "percemon/parser.hpp"
 
-#include "grammar.hpp"    // IWYU pragma: keep
-#include "parse_tree.hpp" // for transform, Selector, par...
 #include "utils/visit.hpp"
+
+#include "actions.hpp"
+#include "error_messages.hpp"
+#include "grammar.hpp"
 
 #include <tao/pegtl.hpp>                    // for pegtl
 #include <tao/pegtl/contrib/parse_tree.hpp> // for basic_node<>::children_t
 
 #include <algorithm> // for max
-#include <utility>   // for move
+#include <iostream>
+#include <utility> // for move
 
 /// Private namespace for the parser core.
 namespace {
 
-namespace gm         = percemon::grammar;
-namespace parse_tree = percemon::parser::parse_tree;
-namespace peg        = tao::pegtl;
+namespace grammar = percemon::grammar;
+namespace parser  = percemon::parser;
+namespace actions = percemon::parser::actions;
+namespace peg     = tao::pegtl;
 
 /// This function takes in some PEGTL compliant input and outputs a concrete context.
 ///
@@ -24,11 +28,28 @@ namespace peg        = tao::pegtl;
 /// abstract syntax tree.
 template <typename ParseInput>
 std::unique_ptr<percemon::Context> _parse(ParseInput&& input) {
-  if (auto root =
-          peg::parse_tree::parse<gm::Specification, parse_tree::Selector>(input)) {
-    auto parsed_ctx = parse_tree::transform(std::move(root));
+  auto global_state     = actions::GlobalContext{};
+  auto top_local_state  = actions::ParserState{};
+  top_local_state.level = 0;
+
+  try {
+    peg::parse<grammar::Specification, actions::action>(
+        input, global_state, top_local_state);
+  } catch (const peg::parse_error& e) {
+    const auto p = e.positions().front();
+
+    std::cerr << e.what() << std::endl
+              << input.line_at(p) << '\n'
+              << std::setw(p.column) << '^' << std::endl;
+    return {};
   }
-  return nullptr;
+
+  auto ctx = std::make_unique<percemon::Context>();
+
+  ctx->defined_formulas = std::move(global_state.defined_formulas);
+  ctx->monitors         = std::move(global_state.monitors);
+
+  return ctx;
 }
 
 } // namespace

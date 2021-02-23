@@ -13,12 +13,9 @@
 #include <string>
 #include <vector>
 
-// Forward-declare Expr
-namespace percemon {
-struct Expr;
-} // namespace percemon
+#include "percemon/ast/ast_fwd.hpp"
 
-namespace percemon::ast::details {
+namespace PERCEMON_AST_NS {
 
 /// @brief Functions on Topologies that return other Topologies.
 ///
@@ -28,7 +25,7 @@ struct SpatialOp {
   enum struct Type { Complement, Intersect, Union, Interior, Closure };
 
   Type op;
-  std::vector<std::shared_ptr<Expr>> args;
+  std::vector<ExprPtr> args;
 };
 
 /// @brief Spatial quantifiers.
@@ -41,7 +38,7 @@ struct SpatialQuantifier {
   enum struct Type { SpExists, SpForall };
 
   Type op;
-  std::shared_ptr<Expr> arg;
+  ExprPtr arg;
 };
 
 /// @brief Spatio-temporal operations
@@ -58,10 +55,18 @@ struct SpatioTemporalOp {
   };
 
   Type op;
-  std::shared_ptr<Expr> interval;
-  std::array<std::shared_ptr<Expr>, 2> args; // Has max 2 arguments.
+  std::array<ExprPtr, 2> args; // Has max 2 arguments.
+  ExprPtr interval;
+
+  SpatioTemporalOp(Type operation, std::array<ExprPtr, 2> arguments) :
+      op{operation}, args{std::move(arguments)}, interval{} {}
+  SpatioTemporalOp(
+      Type operation,
+      std::array<ExprPtr, 2> arguments,
+      ExprPtr interval_arg) :
+      op{operation}, args{std::move(arguments)}, interval{std::move(interval_arg)} {}
 };
 
-} // namespace percemon::ast::details
+} // namespace PERCEMON_AST_NS
 
 #endif /* end of include guard: PERCEMON_AST_DETAILS_SPATIAL */

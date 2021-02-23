@@ -34,8 +34,8 @@ template <typename... R>
 using rpad = peg::seq<R..., peg::at<Skip>>;
 
 namespace sym {
-using lparen    = rpad<peg::one<'('>>;
-using rparen    = rpad<peg::one<')'>>;
+using lparen    = peg::one<'('>;
+using rparen    = peg::one<')'>;
 using colon     = peg::one<':'>;
 using semicolon = peg::one<';'>;
 
@@ -55,7 +55,7 @@ using atsign     = peg::one<'@'>;
 } // namespace sym
 
 /// We use this to mark the end of a word/identifier (which is skippable whitespace)
-struct EndOfWord : peg::not_at<peg::identifier_other> {};
+struct EndOfWord : peg::not_at<peg::sor<peg::identifier_other, Skip>> {};
 
 template <typename K>
 using key = peg::seq<K, EndOfWord>;
@@ -64,6 +64,8 @@ using key = peg::seq<K, EndOfWord>;
 // Primitives
 struct KwTrue : key<TAO_PEGTL_STRING("true")> {};
 struct KwFalse : key<TAO_PEGTL_STRING("false")> {};
+struct KwCTime : key<TAO_PEGTL_STRING("C_TIME")> {};
+struct KwCFrame : key<TAO_PEGTL_STRING("C_FRAME")> {};
 
 using bool_primitives = peg::sor<KwTrue, KwFalse>;
 
@@ -85,6 +87,7 @@ struct KwSpatialForall : key<TAO_PEGTL_STRING("fills")> {};
 
 // Other
 struct KwPin : key<sym::atsign> {};
+struct KwInterval : key<sym::underscore> {};
 
 using builtin_ops =
     peg::sor<KwSpatialExists, KwSpatialForall, KwExists, KwForall, KwOr, KwAnd, KwNot>;
@@ -240,28 +243,35 @@ struct Keyword : peg::if_must<sym::colon, SimpleSymbol> {};
 
 /* TODO(anand): Do we need indexed identifiers? */
 
-struct SExpression;
 /// A constant in the specification language can be a floating point constant, an
 /// integer, a boolean literal, or a string.
 struct Constant
     : peg::sor<DoubleLiteral, IntegerLiteral, BooleanLiteral, StringLiteral> {};
 
-struct ParenExpr : peg::if_must<sym::lparen, SExpression, sym::rparen> {};
-struct SExpression : peg::sor<Constant, Symbol, ParenExpr> {};
-
-/// Attributes are generally pairs consisting of an attribute name and an
-/// associated value, although attributes with no value are also allowed.
+/// Option attributes.
+///
+/// Used to set options for operations and commands that accept them.
+///
+/// Action
+/// ======
+///
+/// 1. Check if there is a keyword.
+/// 2. Move to `option_attributes`.
 struct OptionAttribute : Keyword {};
-struct KeyValueAttribute : peg::seq<Keyword, Skip, SExpression> {};
+/// Key-value attributes.
+///
+/// TODO: Support needed
+/// TODO: Maybe make it a Term, but enforce a constant.
+struct KeyValueAttribute : peg::seq<Keyword, Skip, Constant> {};
 struct Attribute : peg::sor<KeyValueAttribute, OptionAttribute> {};
 
 template <typename... R>
-using paren_surround = peg::if_must<sym::lparen, R..., sym::rparen>;
+using paren_surround = peg::if_must<sym::lparen, Skip, R..., Skip, sym::rparen, Skip>;
 
 struct Term;
 
-/// A qualified identifier is just a symbol. This can include one of the following
-/// pre-defined identifiers/operators:
+/// A operation is just a symbol. This can include one of the following
+/// pre-defined operations/operators:
 ///
 /// - `not`
 /// - `and`
@@ -272,35 +282,122 @@ struct Term;
 /// - `always`
 /// - `eventually`
 /// - `until`
-///
-/// @note
-/// We currently do not support annotated identifiers of the form `(as f Type)`
+struct Operation : Symbol {};
+/// A qualified identifier is used to reference some pre-defined symbol or variable.
 struct QualifiedIdentifier : Symbol {};
-struct VarType : Symbol {};
-struct VarDecl : paren_surround<Symbol, Skip, peg::opt<VarType>> {};
-struct VarList : paren_surround<peg::list<Symbol, Skip>> {};
 
+/// Helper rule for Variable names
+///
+/// Action
+/// ======
+///
+/// 1. Check if there is a `symbol`.
+/// 2. Move `symbol` to `var_name`.
+struct VarName : Symbol {};
+/// Rule to infer variable type.
+///
+/// Action
+/// ======
+///
+/// 1. Check if there is a `symbol`.
+/// 2. Move the `{symbol}` to `type`.
+struct VarType : Symbol {};
+/// Typed or Untyped declarations for Variables.
+///
+/// Actions
+/// =======
+///
+/// 1. Check if there is a var_name. (Must)
+/// 2. Check if there is a type. (Optional)
+/// 3. Create a `Variable` with given name and type.
+/// 4. Move the `Variable` to `variables`
+struct VarDecl : peg::sor<paren_surround<VarName, Skip, peg::opt<VarType>>, VarName> {};
+/// A list of untyped/implicitely typed variables.
+///
+/// Action
+/// ======
+///
+/// @todo Nothing, I think.
+struct VarList : paren_surround<peg::list<VarDecl, Skip>> {};
+
+/// Rule for pinning the frame and time variables.
+///
+/// Action
+/// =====
+///
+/// 1. Assert the operation is "@" (redundant).
+/// 2. Check if there is either 1 or 2 Variables in the `variables` list.
+/// 3. Create a `result`.
 struct PinningExpression : peg::seq<KwPin, Skip, VarList> {};
 
 using quantifier_ops = peg::sor<KwExists, KwForall>;
+/// Rule to encode quantifier expressions.
+///
+/// Action
+/// ======
+///
+/// 1. Check if there is 1 `operation`.
+/// 2. Check if there is at least 1 variable in the `variables` list.
+/// 3. Check if there is 1 Term in the `terms` list.
+/// 4. Create a `result` for the quantifier.
 struct QuantifierExpression : peg::seq<quantifier_ops, Skip, VarList, Skip, Term> {};
 
+/// Rule to encode Interval operations
+///
+/// Action
+/// ======
+///
+/// 1. Check if the operation is '_'
+/// 2. Check if there is exactly 1 Term in the `terms` list.
+/// 3. Create an Interval.
+struct IntervalExpression : peg::seq<KwInterval, Skip, Term> {};
+
+/// Rule to encode arbitrary operations.
+///
+/// Used to match all operations, including Predicates, Arithmetic, Temporal, Spatial,
+/// and Spatio-Temporal.
+///
+/// Action
+/// ======
+///
+/// 1. Check if the `operation` exists. Get type of operation (Predicate, Arithmetic,
+///    etc.)
+/// 2. Get list of `terms` (make sure there is at least 1).
+/// 3. Get list of `attributes`.
+/// 4. Create `result`.
+struct OperationExpression
+    : peg::seq<Operation, Skip, peg::list<Term, Skip>, Skip, peg::star<Attribute>> {};
+
+/// Helper rule for expressions that are within `( ... )`
+///
+/// Actions
+/// =======
+///
+/// Nothing. Let sub-rules handle it.
 struct Expression : peg::sor<
                         PinningExpression,
                         QuantifierExpression,
-                        peg::seq<
-                            QualifiedIdentifier,
-                            Skip,
-                            peg::list<Term, Skip>,
-                            Skip,
-                            peg::star<Attribute>>> {};
+                        IntervalExpression,
+                        OperationExpression> {};
+
+/// A recursive Term expression.
+///
+/// Actions
+/// =======
+///
+/// 1. Push in a new local context.
+/// 2. Call default match.
+/// 3. Check if there is a `result` at the top of the local context stack.
+/// 4. Pop top of stack and move the result into the `terms` list in the new top.
 struct Term : peg::sor<paren_surround<Expression>, Constant, QualifiedIdentifier> {};
 
-template <typename K, typename... S>
-using cmd = peg::if_must<peg::seq<sym::lparen, K>, S..., sym::rparen>;
-
 /// Set global options for the script.
-struct CmdSetOption : peg::seq<KwSetOption, Skip, peg::star<Attribute, Skip>> {};
+///
+/// Actions
+/// =======
+///
+/// For now, nothing.
+struct CmdSetOption : peg::seq<KwSetOption, Skip, peg::plus<Attribute, Skip>> {};
 
 /// Define a formula.
 ///
@@ -308,22 +405,41 @@ struct CmdSetOption : peg::seq<KwSetOption, Skip, peg::star<Attribute, Skip>> {}
 /// The formula must be strongly typed/well-sorted, i.e., all signals referred to in a
 /// formula must be of the same type or types that are coercable to each other (e.g.
 /// `Int` can be coerced to `Real`).
-struct CmdDefineFormula : peg::seq<KwDefineFormula, Skip, Symbol, Skip, Term> {};
+///
+/// Actions
+/// =======
+///
+/// 1. Check if there is exactly 1 Identifier, and 1 Term.
+/// 2. Add entry `{identifier, term}` to `formulas` map.
+struct CmdDefineFormula
+    : peg::seq<KwDefineFormula, Skip, QualifiedIdentifier, Skip, Term> {};
 
 /// Define a monitor for a formula.
 ///
 /// The monitor takes in a list of attributes that will set the semantics of the
 /// monitor. The "name" of the identifier can be used to check the output of PerceMon.
-struct CmdMonitor : peg::seq<KwMonitor, Skip, Symbol, Skip, peg::star<Attribute>> {};
+///
+/// Actions
+/// =======
+///
+/// 1. In the parsed context, we will check if there is exactly 1 Identifier, 1 Term in
+/// the
+///    list of terms, and some arbitrary number of attributes.
+/// 2. We then (for now) just add to the `monitors` map in the context the entry
+///    `{identifier, term}`
+struct CmdMonitor : peg::seq<
+                        KwMonitor,
+                        Skip,
+                        QualifiedIdentifier,
+                        Skip,
+                        Term,
+                        Skip,
+                        peg::star<Attribute, Skip>> {};
 
-using any_command = rpad<peg::if_must<
-    sym::lparen,
-    Skip,
-    peg::sor<CmdSetOption, CmdDefineFormula, CmdMonitor>,
-    Skip,
-    sym::rparen>>;
+using valid_commands = peg::sor<CmdSetOption, CmdDefineFormula, CmdMonitor>;
 
-struct StatementList : peg::until<peg::eof, peg::pad<any_command, Sep>> {};
+struct StatementList
+    : peg::until<peg::eof, peg::pad<paren_surround<valid_commands>, Sep>> {};
 /// A specification essentially consists for a list of top level commands,
 /// andwe are just gonna ignore all horizontal spaces
 struct Specification : peg::must<StatementList> {};

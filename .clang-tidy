@@ -46,5 +46,9 @@ CheckOptions:
   - { key: readability-identifier-naming.FunctionCase,        value: lower_case }
   - { key: readability-identifier-naming.VariableCase,        value: lower_case }
   - { key: readability-identifier-naming.GlobalConstantCase,  value: UPPER_CASE }
+  - { key: bugprone-argument-comment.CommentBoolLiterals, value: true }
+  - { key: bugprone-argument-comment.CommentIntegerLiterals, value: true }
+  - { key: bugprone-argument-comment.CommentFloatLiterals, value: true }
+  - { key: bugprone-argument-comment.CommentNullPtrs, value: true }
 FormatStyle: 'file'
 ...
