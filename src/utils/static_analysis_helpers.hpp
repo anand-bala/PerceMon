@@ -4,23 +4,26 @@
 
 #include <iostream>
 #include <string>
+#include <type_traits>
 
 // LCOV_EXCL_START
 
 namespace utils {
 
-inline void
-assert_([[maybe_unused]] bool condition, [[maybe_unused]] const std::string& msg) {
+template <typename... Msg>
+inline void assert_([[maybe_unused]] bool condition, [[maybe_unused]] Msg... msg) {
 #ifdef NDEBUG
   if (!condition) {
-    std::cerr << "Assertion Failed: " << msg << std::endl;
+    std::cerr << "Assertion Failed: ";
+    (std::cerr << msg << ...);
+    std::cerr << std::endl;
     abort();
   }
 #endif // NDEBUG
 }
 
 [[noreturn]] inline void unreachable() {
-  assert_(false, "Unreachable code!");
+  assert_(std::false_type(), "Unreachable code!");
 #ifdef _MSC_VER
   __assume(false);
 #elif defined(__clang__) || defined(__GNUC__) || defined(__INTEL_COMPILER)

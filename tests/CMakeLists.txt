@@ -1,11 +1,14 @@
 message(STATUS "Building Tests in ${CMAKE_CURRENT_LIST_DIR}")
 # include(Catch)
 
-set(TEST_SRCS test_ast.cc test_percemon.cc)
-
-add_executable(percemon_tests ${TEST_SRCS})
-target_include_directories(percemon_tests PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(percemon_tests PUBLIC PerceMon::PerceMon Catch2::Catch2)
+add_executable(
+  percemon_tests parser/test_grammar.cc parser/test_parsing.cc test_main.cc
+                 utils/test_visit.cc # ast/test_in_source_expressions.cc
+)
+target_include_directories(
+  percemon_tests PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(percemon_tests PRIVATE PerceMon Catch2::Catch2 taocpp::pegtl)
 if(MSVC)
   target_compile_options(percemon_tests PRIVATE /W4 /WX /utf-8)
 else()

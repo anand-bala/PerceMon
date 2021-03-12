@@ -1,7 +1,9 @@
+set(private_deps fmt::fmt magic_enum::magic_enum range-v3::range-v3)
+
 # AST sources
 add_percemon_component(percemon_ast ast/expression.cc)
 target_include_directories(percemon_ast PRIVATE ${CMAKE_CURRENT_LIST_DIR}/ast)
-target_link_libraries(percemon_ast PUBLIC fmt::fmt magic_enum::magic_enum)
+target_link_libraries(percemon_ast PRIVATE "$<BUILD_INTERFACE:${private_deps}>")
 
 # Parser sources
 add_percemon_component(
@@ -15,22 +17,35 @@ add_percemon_component(
   parser/var_lookup.cc
 )
 target_include_directories(percemon_parser PRIVATE ${CMAKE_CURRENT_LIST_DIR}/parser)
-target_link_libraries(percemon_parser PRIVATE taocpp::pegtl magic_enum::magic_enum)
-target_link_libraries(percemon_parser PUBLIC fmt::fmt)
+target_link_libraries(
+  percemon_parser
+  PRIVATE "$<BUILD_INTERFACE:${private_deps};taocpp::pegtl>"
+  PUBLIC percemon_ast
+)
 set_std_filesystem_options(percemon_parser)
+
+add_percemon_component(percemon_topo topo/quadtree.cc topo/topology.cc)
+target_link_libraries(percemon_topo PRIVATE "$<BUILD_INTERFACE:${private_deps}>")
 
 add_percemon_component(
   percemon_algorithms algorithms/default_monitor.cc algorithms/horizon.cc
-  algorithms/topo.cc
+  # algorithms/topo.cc
 )
 target_include_directories(
   percemon_algorithms PRIVATE ${CMAKE_CURRENT_LIST_DIR}/algorithms
 )
-target_link_libraries(percemon_algorithms PRIVATE range-v3::range-v3)
+target_link_libraries(
+  percemon_algorithms
+  PUBLIC percemon_ast percemon_topo
+  PRIVATE "$<BUILD_INTERFACE:${private_deps}>"
+)
 
 add_library(PerceMon libpercemon.cc)
 add_library(PerceMon::PerceMon ALIAS PerceMon)
-target_link_libraries(PerceMon PUBLIC percemon_ast percemon_parser percemon_algorithms)
+target_link_libraries(
+  PerceMon PUBLIC percemon-headers-only percemon_ast percemon_parser percemon_topo
+                  percemon_algorithms
+)
 
 set_default_compile_options(PerceMon)
 set_project_warnings(PerceMon)

@@ -15,6 +15,8 @@
 
 #include <tao/pegtl.hpp>
 
+#include "percemon/internal/filesystem.hpp"
+
 namespace percemon::grammar {
 namespace peg = tao::pegtl;
 
@@ -443,6 +445,24 @@ struct StatementList
 /// A specification essentially consists for a list of top level commands,
 /// andwe are just gonna ignore all horizontal spaces
 struct Specification : peg::must<StatementList> {};
+
+// LCOV_EXCL_START
+namespace internal {
+
+/// **INTERNAL USE ONLY**
+///
+/// This is used to call `tao::pagtl::contrib::analyze`, a function that
+/// analyzes the parser grammar for construction errors like unresolved cycles,
+/// etc. Used in the tests to check the grammar and is useful only for
+/// developers of this library.
+size_t analyze(int verbose = 1);
+
+bool trace_from_file(const fs::path&);
+
+} // namespace grammar::internal
+
+// LCOV_EXCL_STOP
+
 
 } // namespace percemon::grammar
 

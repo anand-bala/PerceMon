@@ -71,23 +71,6 @@ struct Context {
   std::map<std::string, ExprPtr> monitors;
 };
 
-// LCOV_EXCL_START
-namespace grammar::internal {
-
-/// **INTERNAL USE ONLY**
-///
-/// This is used to call `tao::pagtl::contrib::analyze`, a function that
-/// analyzes the parser grammar for construction errors like unresolved cycles,
-/// etc. Used in the tests to check the grammar and is useful only for
-/// developers of this library.
-size_t analyze(int verbose = 1);
-
-bool trace_from_file(const fs::path&);
-
-} // namespace grammar::internal
-
-// LCOV_EXCL_STOP
-
 } // namespace percemon
 
 #endif /* end of include guard: PERCEMON_PARSER_HPP */

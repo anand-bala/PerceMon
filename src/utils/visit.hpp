@@ -1,30 +1,32 @@
-/*
- * Copyright Björn Fahller 2018,2019
- *
- *  Use, modification and distribution is subject to the
- *  Boost Software License, Version 1.0. (See accompanying
- *  file LICENSE_1_0.txt or copy at
- *  http://www.boost.org/LICENSE_1_0.txt)
- *
- * Project home: https://github.com/rollbear/visit
- */
+/// @file   utils/visit.hpp
+/// @brief  Custom variant visitor optimized for inlining
+///
+/// Derived from [rollbear/visit](https://github.com/rollbear/visit), with some other
+/// functions that help using variants.
+///
+/// Copyright Björn Fahller 2018,2019
+///
+///  Use, modification and distribution is subject to the
+///  Boost Software License, Version 1.0. (See accompanying
+///  file LICENSE_1_0.txt or copy at
+///  http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef ROLLBEAR_VISIT_HPP
-#define ROLLBEAR_VISIT_HPP
+#ifndef UTILS_VISIT_HPP
+#define UTILS_VISIT_HPP
 
 #include <tuple>
 #include <utility>
 #include <variant>
 
-namespace rollbear {
+namespace utils {
 namespace detail {
 
 template <typename... Ts>
-std::variant<Ts...> variant_access_(const std::variant<Ts...> *);
+std::variant<Ts...> variant_access_(const std::variant<Ts...>*);
 
 template <typename T>
 using variant_access =
-    decltype(variant_access_(static_cast<std::decay_t<T> *>(nullptr)));
+    decltype(variant_access_(static_cast<std::decay_t<T>*>(nullptr)));
 
 template <template <typename...> class, typename = void, typename...>
 struct detected : std::false_type {};
@@ -46,43 +48,44 @@ constexpr std::index_sequence<I, Is...> prepend(std::index_sequence<Is...>) {
   return {};
 }
 
-constexpr std::index_sequence<> next_seq(std::index_sequence<>,
-                                         std::index_sequence<>) {
+constexpr std::index_sequence<> next_seq(std::index_sequence<>, std::index_sequence<>) {
   return {};
 }
 
-template <typename T, typename V> struct copy_referencenesss_ {
+template <typename T, typename V>
+struct copy_referencenesss_ {
   using type = T;
 };
 
-template <typename T, typename V> struct copy_referencenesss_<T, V &> {
-  using type = T &;
+template <typename T, typename V>
+struct copy_referencenesss_<T, V&> {
+  using type = T&;
 };
 
-template <typename T, typename V> struct copy_referencenesss_<T, V &&> {
-  using type = std::remove_reference_t<T> &&;
+template <typename T, typename V>
+struct copy_referencenesss_<T, V&&> {
+  using type = std::remove_reference_t<T>&&;
 };
 
 template <typename T, typename V>
 using copy_referenceness = typename copy_referencenesss_<T, V>::type;
 
 template <typename T, typename TSource>
-using as_if_forwarded =
-    std::conditional_t<!std::is_reference<TSource>{},
-                       std::add_rvalue_reference_t<std::remove_reference_t<T>>,
-                       copy_referenceness<T, TSource>>;
+using as_if_forwarded = std::conditional_t<
+    !std::is_reference<TSource>{},
+    std::add_rvalue_reference_t<std::remove_reference_t<T>>,
+    copy_referenceness<T, TSource>>;
 
 template <typename TLike, typename T>
-constexpr decltype(auto) forward_like(T &&x) noexcept {
-  static_assert(!(std::is_rvalue_reference<decltype(x)>{} &&
-                  std::is_lvalue_reference<TLike>{}));
+constexpr decltype(auto) forward_like(T&& x) noexcept {
+  static_assert(
+      !(std::is_rvalue_reference<decltype(x)>{} && std::is_lvalue_reference<TLike>{}));
 
   return static_cast<as_if_forwarded<T, TLike>>(x);
 }
 
 template <std::size_t I, std::size_t... Is, std::size_t J, std::size_t... Js>
-constexpr auto next_seq(std::index_sequence<I, Is...>,
-                        std::index_sequence<J, Js...>) {
+constexpr auto next_seq(std::index_sequence<I, Is...>, std::index_sequence<J, Js...>) {
   if constexpr (I + 1 == J) {
     return prepend<0>(
         next_seq(std::index_sequence<Is...>{}, std::index_sequence<Js...>{}));
@@ -99,7 +102,8 @@ static constexpr std::size_t sum(std::index_sequence<I...>) {
 template <typename T>
 using remove_cv_ref_t = std::remove_const_t<std::remove_reference_t<T>>;
 
-template <std::size_t I, typename T> decltype(auto) get(T &&t) {
+template <std::size_t I, typename T>
+decltype(auto) get(T&& t) {
   if constexpr (is_variant_v<T>) {
     return std::get<I>(std::forward<T>(t));
   } else {
@@ -108,7 +112,8 @@ template <std::size_t I, typename T> decltype(auto) get(T &&t) {
   }
 }
 
-template <std::size_t I, typename T> auto get_if(T *t) {
+template <std::size_t I, typename T>
+auto get_if(T* t) {
   if constexpr (is_variant_v<T>) {
     return std::get_if<I>(t);
   } else {
@@ -117,7 +122,8 @@ template <std::size_t I, typename T> auto get_if(T *t) {
   }
 }
 
-template <typename V> constexpr size_t variant_size() {
+template <typename V>
+constexpr size_t variant_size() {
   if constexpr (is_variant_v<V>) {
     return std::variant_size_v<variant_access<V>>;
   } else {
@@ -125,7 +131,8 @@ template <typename V> constexpr size_t variant_size() {
   }
 }
 
-template <typename V> constexpr size_t index(const V &v) {
+template <typename V>
+constexpr size_t index(const V& v) {
   if constexpr (is_variant_v<V>) {
     return v.index();
   } else {
@@ -133,8 +140,8 @@ template <typename V> constexpr size_t index(const V &v) {
   }
 }
 template <std::size_t... Is, std::size_t... Ms, typename F, typename... Vs>
-inline constexpr auto visit(std::index_sequence<Is...> i,
-                            std::index_sequence<Ms...> m, F &&f, Vs &&...vs) {
+inline constexpr auto
+visit(std::index_sequence<Is...> i, std::index_sequence<Ms...> m, F&& f, Vs&&... vs) {
   constexpr auto n = next_seq(i, m);
   if constexpr (sum(n) == 0) {
     return f(get<Is>(std::forward<Vs>(vs))...);
@@ -146,18 +153,29 @@ inline constexpr auto visit(std::index_sequence<Is...> i,
   }
 }
 
-template <typename> inline constexpr std::size_t zero = 0;
+template <typename>
+inline constexpr std::size_t zero = 0;
 } // namespace detail
-template <typename F, typename... Vs> inline auto visit(F &&f, Vs &&...vs) {
+template <typename F, typename... Vs>
+inline auto visit(F&& f, Vs&&... vs) {
   if constexpr (((detail::variant_size<Vs>() == 1) && ...)) {
     return f(detail::forward_like<Vs>(*detail::get_if<0>(&vs))...);
   } else {
-    return detail::visit(std::index_sequence<detail::zero<Vs>...>{},
-                         std::index_sequence<detail::variant_size<Vs>()...>{},
-                         std::forward<F>(f), std::forward<Vs>(vs)...);
+    return detail::visit(
+        std::index_sequence<detail::zero<Vs>...>{},
+        std::index_sequence<detail::variant_size<Vs>()...>{},
+        std::forward<F>(f),
+        std::forward<Vs>(vs)...);
   }
 }
 
-} // namespace rollbear
+template <class... Ts>
+struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+template <class... Ts>
+overloaded(Ts...) -> overloaded<Ts...>;
 
-#endif // ROLLBEAR_VISIT_HPP
+} // namespace utils
+
+#endif // UTILS_VISIT_HPP

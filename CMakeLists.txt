@@ -44,6 +44,8 @@ include(StaticAnalyzers)
 include(CTest)
 include(Codecov)
 
+include(GNUInstallDirs)
+
 # ######################################################################################
 # Some Global Configuration  #
 # ######################################################################################
@@ -67,16 +69,58 @@ include(ThirdPartyDeps)
 # Helper targets/functions  #
 # ######################################################################################
 
+set(percemon_headers
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/ast_fwd.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/functions.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/primitives.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/propositional.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/spatial.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/temporal.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/expression.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/datastream.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/exception.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/internal/filesystem.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/monitoring.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/parser.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/percemon.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/topo.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/topo/details/base.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/topo/details/bbox.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/topo/details/primitives.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/topo/details/quadtree.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/topo/details/topology.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/topo/details/vector2.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/topo/topo_fwd.hpp
+)
+
+add_library(percemon-headers-only INTERFACE)
+target_sources(percemon-headers-only INTERFACE "$<BUILD_INTERFACE:${percemon_headers}>")
+target_include_directories(
+  percemon-headers-only
+  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
+)
+target_include_directories(
+  percemon-headers-only SYSTEM
+  INTERFACE $<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+install(
+  TARGETS percemon-headers-only
+  EXPORT PerceMonTargets
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
 # Add an OBJECT library for a component of libpercemon. A thin wrapper around
 # `add_library(OBJECT)`. Thus, it takes as the first argument a `target` name, and the
 # rest is assumed to be the sources making up the Object Library.
 function(add_percemon_component target)
   add_library(${target} OBJECT ${ARGN})
+  target_link_libraries(${target} PUBLIC percemon-headers-only)
   target_include_directories(
-    ${target}
-    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-           $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+    ${target} PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
   )
   target_compile_features(${target} PUBLIC cxx_std_17)
   set_default_compile_options(${target})
@@ -91,6 +135,11 @@ function(add_percemon_component target)
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 
+endfunction()
+
+# Link to dependencies privately, i.e., at build time.
+function(privately_link target)
+  
 endfunction()
 
 # ######################################################################################
@@ -122,7 +171,6 @@ endif()
 # Installation  #
 # ######################################################################################
 
-include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
 set(PerceMon_CMAKECONFIG_INSTALL_DIR
