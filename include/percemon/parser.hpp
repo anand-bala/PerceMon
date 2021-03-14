@@ -15,7 +15,7 @@
 #include <string>
 #include <string_view>
 
-#include "percemon/ast/ast_fwd.hpp"
+#include "percemon/ast/expression.hpp"
 #include "percemon/internal/filesystem.hpp"
 
 namespace percemon {
@@ -69,6 +69,9 @@ struct Context {
   std::map<std::string, ExprPtr> defined_formulas;
   /// List of settings for monitors, keyed by their corresponding identifiers.
   std::map<std::string, ExprPtr> monitors;
+
+  /// List of global settings.
+  AttrContainer settings;
 };
 
 } // namespace percemon

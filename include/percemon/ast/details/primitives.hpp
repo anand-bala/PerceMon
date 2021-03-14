@@ -10,7 +10,7 @@
 #include <string>
 #include <variant>
 
-namespace PERCEMON_AST_NS {
+namespace percemon::ast::details {
 
 /// Placeholder for current time point.
 struct C_TIME {};
@@ -18,9 +18,15 @@ struct C_TIME {};
 struct C_FRAME {};
 
 using primitive_types =
-    std::variant<bool, long int, double, std::string, C_TIME, C_FRAME>;
+    std::variant<bool, long long int, double, std::string, C_TIME, C_FRAME>;
 
-/// @brief Node that holds a constant value: boolean, integer, double, or some string.
+/// @brief A constant in the AST.
+///
+/// An AST type that wraps around `string`, `double`, `int`, and `bool` to encode all
+/// possible constants in the specification.
+///
+/// We use the string constant to represent special types for many specialized logics.
+/// For example, in STQL, the string "CTIME" and "CFRAME" will refer to the
 struct Constant : primitive_types {
   using primitive_types::variant;
 
@@ -34,9 +40,9 @@ struct Constant : primitive_types {
     return std::holds_alternative<double>(*this);
   }
 
-  /// Convenience method to check if the constant is a `int`.
+  /// Convenience method to check if the constant is a signed integer.
   [[nodiscard]] constexpr bool is_integer() const {
-    return std::holds_alternative<long int>(*this);
+    return std::holds_alternative<long long int>(*this);
   }
 
   /// Convenience method to check if the constant is a `string`.
@@ -44,15 +50,7 @@ struct Constant : primitive_types {
     return std::holds_alternative<std::string>(*this);
   }
 
-  /// Convenience method to check if the constant is the `C_TIME` special value.
-  [[nodiscard]] constexpr bool is_c_time() const {
-    return std::holds_alternative<C_TIME>(*this);
-  }
-
-  /// Convenience method to check if the constant is the `C_FRAME` special value.
-  [[nodiscard]] constexpr bool is_c_frame() const {
-    return std::holds_alternative<C_FRAME>(*this);
-  }
+  [[nodiscard]] std::string to_string() const;
 };
 
 /// @brief A typed variable.
@@ -65,6 +63,7 @@ struct Variable {
   /// The type of the variable can either be a primitive value, or a custom type.
   /// An example of a custom type would be a `DataFrame` in the STQL semantics.
   enum struct Type {
+    Object,    ///< The variable is an object ID
     Frame,     ///< The variable is a frame placeholder.
     Timepoint, ///< The variable is a timepoint placeholder
     Real,      ///< Real-valued (double) variables.
@@ -95,6 +94,10 @@ struct Variable {
       custom_type{std::move(type_str)},
       scope{scope_arg} {};
 
+  [[nodiscard]] constexpr bool is_object() const {
+    return type == Type::Object;
+  }
+
   [[nodiscard]] constexpr bool is_frame() const {
     return type == Type::Frame;
   }
@@ -113,8 +116,10 @@ struct Variable {
   [[nodiscard]] constexpr bool is_custom() const {
     return type == Type::Custom;
   }
+
+  [[nodiscard]] std::string to_string() const;
 };
 
-} // namespace PERCEMON_AST_NS
+} // namespace percemon::ast::details
 
 #endif /* end of include guard: __PERCEMON_AST_DETAILS_PRIMITIVES_HPP__ */

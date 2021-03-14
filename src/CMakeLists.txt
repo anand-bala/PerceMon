@@ -1,9 +1,34 @@
 set(private_deps fmt::fmt magic_enum::magic_enum range-v3::range-v3)
 
+# We need to check if std::hash<nullptr_t> is supported by the current compiler
+message(CHECK_START "Checking if std::hash<nullptr_t> is defined")
+try_compile(
+  std_hash_nullptr_t ${CMAKE_CURRENT_BINARY_DIR}
+  SOURCES ${PROJECT_SOURCE_DIR}/cmake/test_std_hash_nullptr.cc
+  COMPILE_DEFINITIONS -std=c++17
+)
+if(std_hash_nullptr_t)
+  message(CHECK_PASS "works")
+else()
+  message(CHECK_FAIL "failed")
+endif()
+
 # AST sources
-add_percemon_component(percemon_ast ast/expression.cc)
+add_percemon_component(
+  percemon_ast
+  ast/temporal.cc
+  ast/expression.cc
+  ast/primitives.cc
+  ast/functions.cc
+  ast/attributes.cc
+  ast/propositional.cc
+  ast/spatial.cc
+)
 target_include_directories(percemon_ast PRIVATE ${CMAKE_CURRENT_LIST_DIR}/ast)
 target_link_libraries(percemon_ast PRIVATE "$<BUILD_INTERFACE:${private_deps}>")
+if(std_hash_nullptr_t)
+  target_compile_definitions(percemon_ast PRIVATE PERCEMON_STD_HASH_NULLPTR_T_EXISTS)
+endif()
 
 # Parser sources
 add_percemon_component(

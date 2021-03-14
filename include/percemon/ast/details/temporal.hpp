@@ -16,7 +16,7 @@
 
 #include "percemon/ast/ast_fwd.hpp"
 
-namespace PERCEMON_AST_NS {
+namespace percemon::ast::details {
 /// @brief Generic AST node for temporal operators
 struct TemporalOp {
   enum struct Type {
@@ -31,14 +31,19 @@ struct TemporalOp {
   };
 
   Type op;
-  std::array<ExprPtr, 2> args; // Has max 2 arguments.
-  ExprPtr interval;
+  std::vector<ExprPtr> args; // Has max 2 arguments.
+  std::shared_ptr<Interval> interval;
 
-  TemporalOp(Type operation, std::array<ExprPtr, 2> arguments) :
-      op{operation}, args{std::move(arguments)}, interval{nullptr} {}
-  TemporalOp(Type operation, std::array<ExprPtr, 2> arguments, ExprPtr interval_arg) :
-      op{operation}, args{std::move(arguments)}, interval{std::move(interval_arg)} {}
+  TemporalOp(
+      Type operation,
+      std::vector<ExprPtr> arguments,
+      std::shared_ptr<Interval> interval_arg);
+
+  TemporalOp(Type operation, std::vector<ExprPtr> arguments) :
+      TemporalOp{operation, std::move(arguments), {}} {}
+
+  [[nodiscard]] std::string to_string() const;
 };
-} // namespace PERCEMON_AST_NS
+} // namespace percemon::ast::details
 
 #endif /* end of include guard: PERCEMON_AST_DETAILS_TEMPORAL */

@@ -10,7 +10,8 @@
 /// but they do include arithmetic operations (`+, -, /, *`), and any other mathematical
 /// operations supported by the semantics.
 ///
-/// We also define the AST node for pinning operations `(@ x f)`.
+/// We also define the AST node for pinning operations `(@ x f)` and interval operations
+/// `(_ term)`.
 
 #pragma once
 #ifndef PERCEMON_AST_DETAILS_FUNCTIONS
@@ -24,52 +25,92 @@
 #include <vector>
 
 #include "percemon/ast/ast_fwd.hpp"
+#include "percemon/ast/details/attributes.hpp"
 
-namespace PERCEMON_AST_NS {
+namespace percemon::ast::details {
 
 /// @brief Functions on `Constant`s, `Variable`s, and other `Function`s.
 ///
-/// This can refer to mathematical functions (excluding logical operations) or to STQL
-/// specific functions like Euclidean distance, Class reference, Probability reference,
-/// etc.
+/// This can refer to mathematical functions (excluding logical operations).
 struct Function {
-  enum struct Type {
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Dist,
-    Offset,
-    Class,
-    Prob,
-    Area,
-    BBox,
-    Custom
-  };
+  enum struct Type { Add, Sub, Mul, Div, Dist, Offset, Class, Prob, Custom };
 
   Type fn;
-  std::vector<ExprPtr> args;
   std::optional<std::string> custom_fn;
+  std::vector<ExprPtr> args;
+  std::set<Attribute, Attribute::KeyCompare> attrs;
 
-  std::set<std::string> attrs;
+  Function(
+      Type op,
+      std::optional<std::string> op_str,
+      std::vector<ExprPtr> operands,
+      std::set<Attribute, Attribute::KeyCompare> attributes);
 
-  Function(Type op, std::vector<ExprPtr> operands, std::set<std::string> attributes) :
-      fn{op}, args{std::move(operands)}, attrs{std::move(attributes)} {}
+  Function(Type op, std::vector<ExprPtr> operands) :
+      Function{op, std::nullopt, std::move(operands), {}} {}
+
+  Function(
+      Type op,
+      std::vector<ExprPtr> operands,
+      std::set<Attribute, Attribute::KeyCompare> attributes) :
+      Function{op, std::nullopt, std::move(operands), std::move(attributes)} {}
 
   Function(
       std::string op,
       std::vector<ExprPtr> operands,
-      std::set<std::string> attributes) :
-      fn{Type::Custom},
-      args{std::move(operands)},
-      custom_fn{std::move(op)},
-      attrs{std::move(attributes)} {}
+      std::set<Attribute, Attribute::KeyCompare> attributes) :
+      Function{
+          Type::Custom,
+          std::move(op),
+          std::move(operands),
+          std::move(attributes)} {}
+
+  [[nodiscard]] bool is_arithmetic() const {
+    switch (fn) {
+      case Type::Add:
+      case Type::Mul:
+      case Type::Sub:
+      case Type::Div:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  [[nodiscard]] bool is_object_op() const {
+    switch (fn) {
+      case Type::Class:
+      case Type::Prob:
+      case Type::Offset:
+      case Type::Dist:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /// Check if the syntax tree contains only operations on Time variables or constants.
+  [[nodiscard]] bool is_time_interval() const;
+
+  [[nodiscard]] bool is_custom() const {
+    return fn == Type::Custom;
+  }
+
+  [[nodiscard]] std::string to_string() const;
+
+  void validate() const;
 };
 
-/// @brief Pinned time and frame variables
+/// @brief Pinned time and frame variables for some sub-expression.
 struct PinnedFrame {
   ExprPtr time_var  = nullptr;
   ExprPtr frame_var = nullptr;
+
+  ExprPtr arg;
+
+  PinnedFrame(ExprPtr time_v, ExprPtr frame_v, ExprPtr subexpr);
+
+  [[nodiscard]] std::string to_string() const;
 };
 
 /// @brief Interval constraint holder.
@@ -78,8 +119,12 @@ struct PinnedFrame {
 /// primitives.
 struct Interval {
   ExprPtr interval = nullptr;
+
+  Interval(ExprPtr interval_expr);
+
+  [[nodiscard]] std::string to_string() const;
 };
 
-} // namespace PERCEMON_AST_NS
+} // namespace percemon::ast::details
 
 #endif /* end of include guard: PERCEMON_AST_DETAILS_FUNCTIONS */

@@ -72,6 +72,7 @@ include(ThirdPartyDeps)
 set(percemon_headers
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/ast_fwd.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/attributes.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/functions.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/primitives.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/propositional.hpp
@@ -139,7 +140,7 @@ endfunction()
 
 # Link to dependencies privately, i.e., at build time.
 function(privately_link target)
-  
+
 endfunction()
 
 # ######################################################################################

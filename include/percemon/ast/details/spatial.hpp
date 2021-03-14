@@ -15,33 +15,31 @@
 
 #include "percemon/ast/ast_fwd.hpp"
 
-namespace PERCEMON_AST_NS {
+namespace percemon::ast::details {
 
 /// @brief Functions on Topologies that return other Topologies.
 ///
 /// Essentially, this node encodes all operations that can be used on topological
 /// objects, like Complement, Intersect, Union, etc.
+///
+/// @note
+/// Arguments here must be other spatial operations. For the special case of BBox, the
+/// argument must be an Object ID variable.
 struct SpatialOp {
-  enum struct Type { Complement, Intersect, Union, Interior, Closure };
+  enum struct Type { BBox, Area, Complement, Interior, Closure, Intersect, Union };
 
   Type op;
   std::vector<ExprPtr> args;
-};
 
-/// @brief Spatial quantifiers.
-///
-/// These are the smallest spatial operations that can be used in the standard
-/// Temporal/Propositional logic.
-struct SpatialQuantifier {
-  // I retain old names for sanity.
-  // Should probably change these to NotEmpty and Fills.
-  enum struct Type { SpExists, SpForall };
+  SpatialOp(Type operation, std::vector<ExprPtr> arguments);
 
-  Type op;
-  ExprPtr arg;
+  [[nodiscard]] std::string to_string() const;
 };
 
 /// @brief Spatio-temporal operations
+///
+/// @note
+/// The argument to this must be either SpatialOp or SpatioTemporalOp
 struct SpatioTemporalOp {
   enum struct Type {
     Next,
@@ -55,18 +53,40 @@ struct SpatioTemporalOp {
   };
 
   Type op;
-  std::array<ExprPtr, 2> args; // Has max 2 arguments.
-  ExprPtr interval;
+  std::vector<ExprPtr> args; // Has max 2 arguments.
+  std::shared_ptr<Interval> interval;
 
-  SpatioTemporalOp(Type operation, std::array<ExprPtr, 2> arguments) :
-      op{operation}, args{std::move(arguments)}, interval{} {}
   SpatioTemporalOp(
       Type operation,
-      std::array<ExprPtr, 2> arguments,
-      ExprPtr interval_arg) :
-      op{operation}, args{std::move(arguments)}, interval{std::move(interval_arg)} {}
+      std::vector<ExprPtr> arguments,
+      std::shared_ptr<Interval> interval_arg);
+
+  SpatioTemporalOp(Type operation, std::vector<ExprPtr> arguments) :
+      SpatioTemporalOp{operation, std::move(arguments), {}} {}
+
+  [[nodiscard]] std::string to_string() const;
 };
 
-} // namespace PERCEMON_AST_NS
+/// @brief Spatial quantifiers.
+///
+/// These are the smallest spatial operations that can be used in the standard
+/// Temporal/Propositional logic.
+///
+/// @note
+/// The argument to this must be either SpatialOp or SpatioTemporalOp
+struct SpatialQuantifier {
+  // I retain old names for sanity.
+  // Should probably change these to NotEmpty and Fills.
+  enum struct Type { Exists, Forall };
+
+  Type op;
+  ExprPtr arg;
+
+  SpatialQuantifier(Type operation, ExprPtr argument);
+
+  [[nodiscard]] std::string to_string() const;
+};
+
+} // namespace percemon::ast::details
 
 #endif /* end of include guard: PERCEMON_AST_DETAILS_SPATIAL */

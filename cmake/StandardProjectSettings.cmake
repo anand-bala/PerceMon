@@ -17,8 +17,7 @@ endif()
 if(PROJECT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(CMAKE_EXPORT_COMPILE_COMMANDS
       ON
-      CACHE BOOL "Enable/Disable output of compile commands during generation."
-            FORCE
+      CACHE BOOL "Enable/Disable output of compile commands during generation." FORCE
   )
 endif()
 
@@ -52,9 +51,7 @@ function(set_default_compile_options target)
   endif()
 
   if(ENABLE_LTO)
-    set_target_properties(
-      ${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE
-    )
+    set_target_properties(${target} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
   endif()
 
   if(MSVC)
@@ -65,43 +62,49 @@ endfunction()
 
 # Compile and link flags for std::filesystem
 function(set_std_filesystem_options target)
-  message(CHECK_START "Checking compiler flags for std::filesystem")
-  # Check if we need to add -lstdc++fs or -lc++fs or nothing
-  if(MSVC)
-    set(std_fs_no_lib_needed TRUE)
-  else()
-    try_compile(
-      std_fs_no_lib_needed ${CMAKE_CURRENT_BINARY_DIR} SOURCES
-      ${PROJECT_SOURCE_DIR}/cmake/test_std_filesystem.cc
-      COMPILE_DEFINITIONS -std=c++17
-    )
-    try_compile(
-      std_fs_needs_stdcxxfs ${CMAKE_CURRENT_BINARY_DIR} SOURCES
-      ${PROJECT_SOURCE_DIR}/cmake/test_std_filesystem.cc
-      COMPILE_DEFINITIONS -std=c++17
-      LINK_LIBRARIES stdc++fs
-    )
-    try_compile(
-      std_fs_needs_cxxfs ${CMAKE_CURRENT_BINARY_DIR} SOURCES
-      ${PROJECT_SOURCE_DIR}/cmake/test_std_filesystem.cc
-      COMPILE_DEFINITIONS -std=c++17
-      LINK_LIBRARIES c++fs
+  if(NOT PERCEMON_STDFS_LIBS)
+    message(CHECK_START "Checking compiler flags for std::filesystem")
+    # Check if we need to add -lstdc++fs or -lc++fs or nothing
+    if(MSVC)
+      set(std_fs_no_lib_needed TRUE)
+    else()
+      try_compile(
+        std_fs_no_lib_needed ${CMAKE_CURRENT_BINARY_DIR}
+        SOURCES ${PROJECT_SOURCE_DIR}/cmake/test_std_filesystem.cc
+        COMPILE_DEFINITIONS -std=c++17
+      )
+      try_compile(
+        std_fs_needs_stdcxxfs ${CMAKE_CURRENT_BINARY_DIR}
+        SOURCES ${PROJECT_SOURCE_DIR}/cmake/test_std_filesystem.cc
+        COMPILE_DEFINITIONS -std=c++17
+        LINK_LIBRARIES stdc++fs
+      )
+      try_compile(
+        std_fs_needs_cxxfs ${CMAKE_CURRENT_BINARY_DIR}
+        SOURCES ${PROJECT_SOURCE_DIR}/cmake/test_std_filesystem.cc
+        COMPILE_DEFINITIONS -std=c++17
+        LINK_LIBRARIES c++fs
+      )
+    endif()
+
+    if(${std_fs_needs_stdcxxfs})
+      set(std_fs_lib stdc++fs)
+      message(CHECK_PASS "${std_fs_lib}")
+    elseif(${std_fs_needs_cxxfs})
+      set(std_fs_lib c++fs)
+      message(CHECK_PASS "${std_fs_lib}")
+    elseif(${std_fs_no_lib_needed})
+      set(std_fs_lib "")
+      message(CHECK_PASS "No flags needed")
+    else()
+      message(CHECK_FAIL "unknown compiler, not passing -lstdc++fs or -lc++fs")
+      set(std_fs_lib "")
+    endif()
+    set(PERCEMON_STDFS_LIBS
+        ${std_fs_lib}
+        CACHE INTERNAL "Persistant flags for C++17 std::filesystem"
     )
   endif()
 
-  if(${std_fs_needs_stdcxxfs})
-    set(std_fs_lib stdc++fs)
-    message(CHECK_PASS "${std_fs_lib}")
-  elseif(${std_fs_needs_cxxfs})
-    set(std_fs_lib c++fs)
-    message(CHECK_PASS "${std_fs_lib}")
-  elseif(${std_fs_no_lib_needed})
-    set(std_fs_lib "")
-    message(CHECK_PASS "No flags needed")
-  else()
-    message(CHECK_FAIL "unknown compiler, not passing -lstdc++fs or -lc++fs")
-    set(std_fs_lib "")
-  endif()
-
-  target_link_libraries(${target} PUBLIC ${std_fs_lib})
+  target_link_libraries(${target} PUBLIC ${PERCEMON_STDFS_LIBS})
 endfunction()

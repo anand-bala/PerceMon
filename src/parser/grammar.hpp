@@ -246,9 +246,15 @@ struct Keyword : peg::if_must<sym::colon, SimpleSymbol> {};
 /* TODO(anand): Do we need indexed identifiers? */
 
 /// A constant in the specification language can be a floating point constant, an
-/// integer, a boolean literal, or a string.
-struct Constant
-    : peg::sor<DoubleLiteral, IntegerLiteral, BooleanLiteral, StringLiteral> {};
+/// integer, a boolean literal, or a string. It can also be a C_TIME or a C_FRAME
+/// symbol.
+struct Constant : peg::sor<
+                      DoubleLiteral,
+                      IntegerLiteral,
+                      BooleanLiteral,
+                      StringLiteral,
+                      KwCTime,
+                      KwCFrame> {};
 
 /// Option attributes.
 ///
@@ -329,8 +335,19 @@ struct VarList : paren_surround<peg::list<VarDecl, Skip>> {};
 ///
 /// 1. Assert the operation is "@" (redundant).
 /// 2. Check if there is either 1 or 2 Variables in the `variables` list.
-/// 3. Create a `result`.
-struct PinningExpression : peg::seq<KwPin, Skip, VarList> {};
+/// 3. Check if we have a Term
+/// 4. Create a `result`.
+struct PinningExpression : peg::seq<KwPin, Skip, VarList, Skip, Term> {};
+
+/// Rule to encode Interval operations
+///
+/// Action
+/// ======
+///
+/// 1. Check if the operation is '_'
+/// 2. Check if there is exactly 1 Term in the `terms` list.
+/// 3. Create an Interval.
+struct IntervalExpression : peg::seq<KwInterval, Skip, Term> {};
 
 using quantifier_ops = peg::sor<KwExists, KwForall>;
 /// Rule to encode quantifier expressions.
@@ -343,16 +360,6 @@ using quantifier_ops = peg::sor<KwExists, KwForall>;
 /// 3. Check if there is 1 Term in the `terms` list.
 /// 4. Create a `result` for the quantifier.
 struct QuantifierExpression : peg::seq<quantifier_ops, Skip, VarList, Skip, Term> {};
-
-/// Rule to encode Interval operations
-///
-/// Action
-/// ======
-///
-/// 1. Check if the operation is '_'
-/// 2. Check if there is exactly 1 Term in the `terms` list.
-/// 3. Create an Interval.
-struct IntervalExpression : peg::seq<KwInterval, Skip, Term> {};
 
 /// Rule to encode arbitrary operations.
 ///
@@ -459,10 +466,9 @@ size_t analyze(int verbose = 1);
 
 bool trace_from_file(const fs::path&);
 
-} // namespace grammar::internal
+} // namespace internal
 
 // LCOV_EXCL_STOP
-
 
 } // namespace percemon::grammar
 

@@ -29,7 +29,7 @@ namespace peg     = tao::pegtl;
 template <typename ParseInput>
 std::unique_ptr<percemon::Context> _parse(ParseInput&& input) {
   auto global_state     = actions::GlobalContext{};
-  auto top_local_state  = actions::ParserState{};
+  auto top_local_state  = actions::Context{};
   top_local_state.level = 0;
 
   try {
@@ -48,6 +48,7 @@ std::unique_ptr<percemon::Context> _parse(ParseInput&& input) {
 
   ctx->defined_formulas = std::move(global_state.defined_formulas);
   ctx->monitors         = std::move(global_state.monitors);
+  ctx->settings         = std::move(global_state.settings);
 
   return ctx;
 }
