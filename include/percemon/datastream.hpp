@@ -16,6 +16,7 @@
 #ifndef __PERCEMON_STREAM_HH__
 #define __PERCEMON_STREAM_HH__
 
+#include <cstddef>
 #include <map>
 #include <string>
 
@@ -24,33 +25,69 @@ namespace percemon::datastream {
 // TODO: Euclidean Distance between boxes
 // TODO: Lat and Lon distances between boxes.
 
+/// Timestamp type compatible with ROS Time.
+struct TimeStamp {
+ private:
+  std::uint32_t m_sec;
+  std::uint32_t m_nanosec;
+
+ public:
+  TimeStamp(std::uint32_t seconds, std::uint32_t nanoseconds) :
+      m_sec{seconds}, m_nanosec{nanoseconds} {}
+
+  constexpr bool operator==(const TimeStamp& rhs) const {
+    return m_sec == rhs.m_sec && m_nanosec == rhs.m_nanosec;
+  }
+
+  constexpr bool operator!=(const TimeStamp& rhs) const {
+    return !(*this == rhs);
+  }
+
+  constexpr bool operator<(const TimeStamp& rhs) const {
+    return m_sec < rhs.m_sec || (m_sec == rhs.m_sec && m_nanosec < rhs.m_nanosec);
+  }
+
+  constexpr bool operator<=(const TimeStamp& rhs) const {
+    return m_sec < rhs.m_sec || (m_sec == rhs.m_sec && m_nanosec <= rhs.m_nanosec);
+  }
+
+  constexpr bool operator>=(const TimeStamp& rhs) const {
+    return !(*this < rhs);
+  }
+
+  constexpr bool operator>(const TimeStamp& rhs) const {
+    return !(*this <= rhs);
+  }
+};
+
 /// A bounding box data structure that follows the Pascal VOC Bounding box format
 /// (x-top left, y-top left,x-bottom right, y-bottom right), where each
 /// coordinate is in terms of number of pixels.
 ///
 /// @note The origin in an image is the top left corner.
 struct BoundingBox {
-  size_t xmin;
-  size_t xmax;
-  size_t ymin;
-  size_t ymax;
+  long long int xmin;
+  long long int xmax;
+  long long int ymin;
+  long long int ymax;
 };
 
 /// An object in a frame has a Class, Probability, and BoundingBox associated with it.
 struct Object {
-  int object_class;
+  int class_id;
+  std::string class_label;
   double probability;
   BoundingBox bbox;
 };
 
 struct Frame {
-  /// @brief Number of seconds elapsed
-  double timestamp; // TODO: should I use std::chrono?
+  /// @brief Time stamp
+  TimeStamp timestamp;
   /// @brief Frame number
   size_t frame_num;
 
   /// @brief The size of the frame/image in pixels
-  std::pair<double, double> size; // TODO: Should this be doubles?
+  std::pair<size_t, size_t> size;
 
   /// @brief Map of objects keyed by their IDs
   std::map<std::string, Object> objects;

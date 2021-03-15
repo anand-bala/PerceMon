@@ -70,6 +70,10 @@ include(ThirdPartyDeps)
 # ######################################################################################
 
 set(percemon_headers
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/algorithms.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/algorithms/default_monitor.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/algorithms/history.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/algorithms/horizon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/ast_fwd.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/attributes.hpp
@@ -82,7 +86,6 @@ set(percemon_headers
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/datastream.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/exception.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/internal/filesystem.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/monitoring.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/parser.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/percemon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/topo.hpp

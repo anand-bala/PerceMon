@@ -202,6 +202,7 @@ struct Quadtree : details::BaseTopo<Quadtree> {
         case Quadrant::Mixed:
           throw std::logic_error("Can't compute the box for a Mixed quadrant type");
       }
+      return {};
     }
 
     [[nodiscard]] Quadrant get_quadrant(const BoundingBox& value_box) const noexcept {
