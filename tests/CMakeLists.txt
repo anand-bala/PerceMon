@@ -8,14 +8,12 @@ add_executable(
 target_include_directories(
   percemon_tests PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${PROJECT_SOURCE_DIR}/src
 )
-target_link_libraries(percemon_tests PRIVATE PerceMon Catch2::Catch2 taocpp::pegtl)
+target_link_libraries(percemon_tests PRIVATE percemon Catch2::Catch2 taocpp::pegtl)
 if(MSVC)
   target_compile_options(percemon_tests PRIVATE /W4 /WX /utf-8)
 else()
   target_compile_options(percemon_tests PRIVATE -pedantic -Wall -Wextra -Werror)
 endif()
 
-if(PERCEMON_COVERAGE)
-  add_coverage(percemon_tests)
-endif()
+add_coverage(percemon_tests)
 catch_discover_tests(percemon_tests)

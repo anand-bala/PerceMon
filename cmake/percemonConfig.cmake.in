@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/percemonTargets.cmake")
+
+set_and_check(percemon_INCLUDE_DIR "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_INCLUDEDIR@")
+set_and_check(percemon_LIB_DIR "${PACKAGE_PREFIX_DIR}/@CMAKE_INSTALL_LIBDIR@")
+
+if(NOT percemon_FIND_QUIETLY)
+  message(
+    STATUS "Found percemon version \"${percemon_VERSION}\" ${percemon_VERSION_TYPE}"
+  )
+endif()

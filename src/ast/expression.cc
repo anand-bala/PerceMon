@@ -244,7 +244,8 @@ size_t hash<Expr*>::operator()(const Expr* expr) const {
 
 size_t hash<Interval>::operator()(const Interval& interval) const {
   const auto arg_hasher = std::hash<ExprPtr>{};
-  size_t result         = arg_hasher(interval.interval);
+  size_t result         = arg_hasher(interval.low);
+  hash_combine(result, arg_hasher(interval.high));
   return result;
 }
 

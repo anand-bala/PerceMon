@@ -6,6 +6,8 @@
 #define PERCEMON_TOPO
 
 // IWYU pragma: begin_exports
+#include "percemon/topo/topo_fwd.hpp"
+
 #include "percemon/topo/details/base.hpp"
 #include "percemon/topo/details/bbox.hpp"
 #include "percemon/topo/details/primitives.hpp"

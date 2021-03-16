@@ -10,6 +10,16 @@
 
 namespace utils {
 
+inline void assert_([[maybe_unused]] bool condition) {
+#ifdef NDEBUG
+  if (!condition) {
+    std::cerr << "Assertion Failed: ";
+    std::cerr << std::endl;
+    abort();
+  }
+#endif // NDEBUG
+}
+
 template <typename... Msg>
 inline void assert_([[maybe_unused]] bool condition, [[maybe_unused]] Msg... msg) {
 #ifdef NDEBUG

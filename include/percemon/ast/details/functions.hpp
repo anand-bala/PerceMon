@@ -117,10 +117,29 @@ struct PinnedFrame {
 ///
 /// An interval is essentially some boolean function on functions, constants, and
 /// primitives.
-struct Interval {
+struct IntervalConstraint {
   ExprPtr interval = nullptr;
 
-  Interval(ExprPtr interval_expr);
+  IntervalConstraint(ExprPtr interval_expr);
+
+  [[nodiscard]] std::string to_string() const;
+};
+
+/// @brief Interval type.
+///
+/// @note
+/// An interval can only hold Constants or Parameters for the lower and upper bounds.
+/// This is asserted at construction time.
+struct Interval {
+  enum struct Type { Frame, Time };
+
+  Type type;
+  ExprPtr low;
+  ExprPtr high;
+
+  Interval() = default;
+
+  Interval(Type, ExprPtr, ExprPtr);
 
   [[nodiscard]] std::string to_string() const;
 };

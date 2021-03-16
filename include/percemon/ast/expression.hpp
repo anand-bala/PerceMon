@@ -80,13 +80,18 @@ struct Expr : ast::details::ExprVariant {
   /// @brief Create an expression with a Constant value.
   ///
   /// @see percemon::ast::details::Constant
-  template <typename CType>
-  static ExprPtr Constant(CType);
+  template <typename ConstType>
+  static ExprPtr Constant(ConstType constant) {
+    return make_expr(ast::details::Constant{std::move(constant)});
+  }
 
   /// @brief Create a Frame variable with the given name
   static ExprPtr Var_f(std::string name);
   /// @brief Create a Timepoint variable with the given name
   static ExprPtr Var_t(std::string name);
+  /// @brief Create an Object ID variable
+  static ExprPtr Var_id(std::string name);
+
   /// @brief Create a variable with a string type.
   static ExprPtr Variable(std::string name, std::string type);
   /// @brief Create a variable with a known type.
@@ -150,7 +155,10 @@ struct Expr : ast::details::ExprVariant {
   static ExprPtr PinAtTime(ExprPtr time_var, ExprPtr subexpr);
 
   /// @brief Create an Interval expression
-  static ast::IntervalPtr Interval(ExprPtr expr);
+  // static ast::IntervalPtr Interval(ExprPtr expr);
+
+  static ast::IntervalPtr FrameInterval(ExprPtr low, ExprPtr high);
+  static ast::IntervalPtr TimeInterval(ExprPtr low, ExprPtr high);
 
   /// @brief Create a Logical Negation
   static ExprPtr Not(ExprPtr arg);
@@ -288,7 +296,9 @@ struct Expr : ast::details::ExprVariant {
   static ExprPtr
   SpatialSince(ExprPtr arg1, ExprPtr arg2, std::shared_ptr<ast::Interval> interval);
 
-  [[nodiscard]] size_t id() const;
+  [[nodiscard]] size_t id() const {
+    return this->m_id;
+  }
 
   [[nodiscard]] std::string to_string() const;
 

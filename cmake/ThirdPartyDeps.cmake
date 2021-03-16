@@ -32,7 +32,7 @@ if(NOT magic_enum_FOUND)
   if(NOT magic_enum_POPULATED)
     FetchContent_Populate(magic_enum)
     set(MAGIC_ENUM_OPT_INSTALL
-        ON
+        OFF
         CACHE BOOL "Generate the install target for magic_enum." FORCE
     )
     add_subdirectory(${magic_enum_SOURCE_DIR} ${magic_enum_BINARY_DIR})
@@ -56,7 +56,7 @@ if(NOT fmt_FOUND)
   if(NOT fmt_POPULATED)
     FetchContent_Populate(fmt)
     set(FMT_INSTALL
-        ON
+        OFF
         CACHE BOOL "Generate the install target for fmtlib." FORCE
     )
     add_subdirectory(${fmt_SOURCE_DIR} ${fmt_BINARY_DIR})
@@ -79,7 +79,7 @@ if(NOT pegtl_FOUND)
   FetchContent_GetProperties(pegtl)
   if(NOT pegtl_POPULATED)
     FetchContent_Populate(pegtl)
-    add_subdirectory(${pegtl_SOURCE_DIR} ${pegtl_BINARY_DIR})
+    add_subdirectory(${pegtl_SOURCE_DIR} ${pegtl_BINARY_DIR} EXCLUDE_FROM_ALL)
   endif()
 else()
   message(CHECK_PASS "system library found.")
@@ -99,7 +99,7 @@ if(NOT range-v3_FOUND)
   FetchContent_GetProperties(range-v3)
   if(NOT range-v3_POPULATED)
     FetchContent_Populate(range-v3)
-    add_subdirectory(${range-v3_SOURCE_DIR} ${range-v3_BINARY_DIR})
+    add_subdirectory(${range-v3_SOURCE_DIR} ${range-v3_BINARY_DIR} EXCLUDE_FROM_ALL)
   endif()
 else()
   message(CHECK_PASS "system library found.")

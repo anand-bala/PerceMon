@@ -22,6 +22,8 @@
 
 namespace percemon::datastream {
 
+constexpr double DEFAULT_FPS = 30.0;
+
 // TODO: Euclidean Distance between boxes
 // TODO: Lat and Lon distances between boxes.
 

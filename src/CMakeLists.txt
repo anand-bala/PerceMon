@@ -32,14 +32,8 @@ endif()
 
 # Parser sources
 add_percemon_component(
-  percemon_parser
-  parser/error_messages.hpp
-  parser/grammar.hpp
-  parser/parser.cc
-  # parser/parse_tree.hpp parser/parse_tree.cc
-  parser/actions.hpp
-  parser/grammar.cc
-  parser/var_lookup.cc
+  percemon_parser parser/error_messages.hpp parser/grammar.hpp parser/parser.cc
+  parser/actions.hpp parser/grammar.cc
 )
 target_include_directories(percemon_parser PRIVATE ${CMAKE_CURRENT_LIST_DIR}/parser)
 target_link_libraries(
@@ -53,34 +47,36 @@ add_percemon_component(percemon_topo topo/quadtree.cc topo/topology.cc)
 target_link_libraries(percemon_topo PRIVATE "$<BUILD_INTERFACE:${private_deps}>")
 
 add_percemon_component(
-  percemon_algorithms algorithms/default_monitor.cc algorithms/horizon.cc
-  # algorithms/topo.cc
-)
-target_include_directories(
-  percemon_algorithms PRIVATE ${CMAKE_CURRENT_LIST_DIR}/algorithms
+  percemon_algorithms algorithms/default_monitor.cc algorithms/monitor_info.cc
 )
 target_link_libraries(
   percemon_algorithms
-  PUBLIC percemon_ast percemon_topo
+  PUBLIC "$<BUILD_INTERFACE:percemon_ast;percemon_topo>"
   PRIVATE "$<BUILD_INTERFACE:${private_deps}>"
 )
 
-add_library(PerceMon libpercemon.cc)
-add_library(PerceMon::PerceMon ALIAS PerceMon)
+add_library(percemon libpercemon.cc)
+add_library(percemon::percemon ALIAS percemon)
 target_link_libraries(
-  PerceMon PUBLIC percemon-headers-only percemon_ast percemon_parser percemon_topo
-                  percemon_algorithms
+  percemon
+  PUBLIC percemon-headers-only
+  PRIVATE
+    "$<BUILD_INTERFACE:percemon_ast;percemon_parser;percemon_topo;percemon_algorithms>"
 )
 
-set_default_compile_options(PerceMon)
-set_project_warnings(PerceMon)
-enable_clang_tidy(PerceMon)
-enable_include_what_you_use(PerceMon)
-add_coverage(PerceMon)
+set_target_properties(
+  percemon PROPERTIES VERSION ${PERCEMON_VERSION} SOVERSION ${PERCEMON_VERSION_MAJOR}
+)
+
+set_default_compile_options(percemon)
+set_project_warnings(percemon)
+enable_clang_tidy(percemon)
+enable_include_what_you_use(percemon)
+add_coverage(percemon)
 
 install(
-  TARGETS PerceMon
-  EXPORT PerceMonTargets
+  TARGETS percemon
+  EXPORT percemonTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

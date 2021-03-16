@@ -243,9 +243,11 @@ std::string PinnedFrame::to_string() const {
   return fmt::format("(@ ({} {}) {})", time_str, frame_str, arg->to_string());
 }
 
-Interval::Interval(ExprPtr interval_expr) : interval{std::move(interval_expr)} {
+IntervalConstraint::IntervalConstraint(ExprPtr interval_expr) :
+    interval{std::move(interval_expr)} {
   // Check if
-  // 1. The Interval is a Predicate or a Propositonal operation that only contains
+  // 1. The IntervalConstraint is a Predicate or a Propositonal operation that only
+  // contains
   //    timing constraints in it's syntax tree.
   if (interval != nullptr) {
     bool check = utils::visit(
@@ -262,15 +264,75 @@ Interval::Interval(ExprPtr interval_expr) : interval{std::move(interval_expr)} {
     }
   } else {
     throw std::logic_error(
-        "Interval shouldn't have a null expression as it doesn't make sense");
+        "IntervalConstraint shouldn't have a null expression as it doesn't make sense");
   }
 }
 
-std::string Interval::to_string() const {
+std::string IntervalConstraint::to_string() const {
   if (interval == nullptr) {
     return "";
   }
   return fmt::format("(_ {})", interval->to_string());
+}
+
+Interval::Interval(Type frame_or_time, ExprPtr _low, ExprPtr _high) :
+    type{frame_or_time}, low{std::move(_low)}, high{std::move(_high)} {
+  if (low == nullptr) {
+    switch (type) {
+      case Type::Frame:
+        low = Expr::Constant(static_cast<unsigned long long int>(0));
+        break;
+      case Type::Time:
+        low = Expr::Constant(static_cast<double>(0));
+        break;
+    }
+  } else { // If we weren't given a nullptr low
+    bool is_const = std::holds_alternative<Constant>(*low);
+    if (!is_const) {
+      throw std::invalid_argument("Lower bound for interval must be a Constant");
+    } else {
+      const auto& val = std::get<Constant>(*low);
+      if (!val.is_nonnegative()) {
+        throw std::invalid_argument("Lower bound for interval is negative");
+      } else if (!val.is_bool()) {
+        throw std::invalid_argument("Boolean interval constants don't make sense");
+      }
+    }
+  }
+
+  if (high == nullptr) {
+    high = Expr::Constant(std::numeric_limits<double>::infinity());
+  } else { // If we weren't given a nullptr high
+    bool is_const = std::holds_alternative<Constant>(*high);
+    if (!is_const) {
+      throw std::invalid_argument("Upper bound for interval must be a Constant");
+    } else {
+      const auto& val = std::get<Constant>(*high);
+      if (!val.is_nonnegative()) {
+        throw std::invalid_argument("Upper bound for interval is negative");
+      } else if (!val.is_bool()) {
+        throw std::invalid_argument("Boolean interval constants don't make sense");
+      }
+    }
+  }
+}
+
+std::string Interval::to_string() const {
+  auto type_name = std::string{magic_enum::enum_name(type)};
+  // convert to lower-case
+  std::transform(
+      type_name.begin(), type_name.end(), type_name.begin(), [](unsigned char c) {
+        return std::tolower(c);
+      });
+  std::string low_str  = "0";
+  std::string high_str = "inf";
+  if (low) {
+    low_str = low->to_string();
+  }
+  if (high) {
+    high_str = high->to_string();
+  }
+  return fmt::format("(_{} {} {})", type_name, low_str, high_str);
 }
 
 } // namespace ast::details
@@ -338,8 +400,14 @@ ExprPtr Expr::PinAtTime(ExprPtr time_var, ExprPtr subexpr) {
   return PinAt(std::move(time_var), nullptr, std::move(subexpr));
 }
 
-std::shared_ptr<ast::Interval> Expr::Interval(ExprPtr expr) {
-  return std::make_shared<ast::Interval>(std::move(expr));
+std::shared_ptr<ast::Interval> Expr::FrameInterval(ExprPtr low, ExprPtr high) {
+  return std::make_shared<ast::Interval>(
+      ast::Interval::Type::Frame, std::move(low), std::move(high));
+}
+
+std::shared_ptr<ast::Interval> Expr::TimeInterval(ExprPtr low, ExprPtr high) {
+  return std::make_shared<ast::Interval>(
+      ast::Interval::Type::Time, std::move(low), std::move(high));
 }
 
 } // namespace percemon

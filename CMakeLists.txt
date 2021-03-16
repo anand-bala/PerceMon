@@ -7,11 +7,11 @@ if(CMAKE_CURRENT_LIST_DIR STREQUAL CMAKE_SOURCE_DIR)
 endif()
 
 include(cmake/Version.cmake)
-message(STATUS "Configuring PerceMon: v${PerceMon_FULL_VERSION}")
+message(STATUS "Configuring percemon: v${PERCEMON_FULL_VERSION}")
 
 project(
-  PerceMon
-  VERSION ${PerceMon_VERSION}
+  percemon
+  VERSION ${PERCEMON_VERSION}
   DESCRIPTION
     "A library for efficient online monitoring for spatio-temporal quality logic on streams of perception data."
   LANGUAGES CXX
@@ -72,8 +72,6 @@ include(ThirdPartyDeps)
 set(percemon_headers
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/algorithms.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/algorithms/default_monitor.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/algorithms/history.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/include/percemon/algorithms/horizon.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/ast_fwd.hpp
     ${CMAKE_CURRENT_LIST_DIR}/include/percemon/ast/details/attributes.hpp
@@ -111,7 +109,7 @@ target_include_directories(
 
 install(
   TARGETS percemon-headers-only
-  EXPORT PerceMonTargets
+  EXPORT percemonTargets
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -130,20 +128,11 @@ function(add_percemon_component target)
   set_default_compile_options(${target})
   set_project_warnings(${target})
   add_coverage(${target})
-
-  install(
-    TARGETS ${target}
-    EXPORT PerceMonTargets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  )
-
 endfunction()
 
-# Link to dependencies privately, i.e., at build time.
+# Link to dependencies privately, i.e., don't install it.
 function(privately_link target)
-
+  target_link_libraries(${target} PRIVATE "$<BUILD_INTERFACE:${ARGN}>")
 endfunction()
 
 # ######################################################################################
@@ -177,32 +166,44 @@ endif()
 
 include(CMakePackageConfigHelpers)
 
-set(PerceMon_CMAKECONFIG_INSTALL_DIR
+set(PERCEMON_CMAKECONFIG_INSTALL_DIR
     "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-    CACHE STRING "install path for PerceMonConfig.cmake"
+    CACHE STRING "install path for percemonConfig.cmake"
 )
-set(INSTALL_CONFIGDIR ${PerceMon_CMAKECONFIG_INSTALL_DIR})
+set(INSTALL_CONFIGDIR ${PERCEMON_CMAKECONFIG_INSTALL_DIR})
 
 # Install catkin package.xml
-install(FILES package.xml DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/PerceMon)
+install(FILES package.xml DESTINATION ${CMAKE_INSTALL_DATAROOTDIR})
 
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(
+  EXPORT percemonTargets
+  FILE percemonTargets.cmake
+  NAMESPACE percemon::
+  DESTINATION ${INSTALL_CONFIGDIR}
+)
 
+# Create a ConfigVersion.cmake file
 write_basic_package_version_file(
-  PerceMonConfigVersion.cmake
-  VERSION ${PerceMon_VERSION}
+  ${CMAKE_CURRENT_BINARY_DIR}/percemonConfigVersion.cmake
+  VERSION ${PROJECT_VERSION}
   COMPATIBILITY AnyNewerVersion
 )
 
-install(
-  EXPORT PerceMonTargets
-  FILE PerceMonTargets.cmake
-  NAMESPACE PerceMon::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/PerceMon
+configure_package_config_file(
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/percemonConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/percemonConfig.cmake
+  INSTALL_DESTINATION ${INSTALL_CONFIGDIR}
 )
 
-configure_file(cmake/PerceMonConfig.cmake.in PerceMonConfig.cmake @ONLY)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/PerceMonConfig.cmake"
-              "${CMAKE_CURRENT_BINARY_DIR}/PerceMonConfigVersion.cmake"
+# Install the include dir
+install(DIRECTORY include/percemon TYPE INCLUDE)
+
+# Install the config, configversion and custom find modules
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/percemonConfig.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/percemonConfigVersion.cmake
         DESTINATION ${INSTALL_CONFIGDIR}
 )
+
+install(EXPORT percemonTargets DESTINATION ${INSTALL_CONFIGDIR})
+
+install(FILES LICENSE LICENSE-3rdParty DESTINATION ${CMAKE_INSTALL_DOCDIR})

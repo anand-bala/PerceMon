@@ -10,7 +10,6 @@
 
 #include "percemon/utils.hpp"
 
-
 using namespace percemon::ast;
 namespace utils = percemon::utils;
 
@@ -95,13 +94,18 @@ struct HorizonCompute {
     return std::visit([&](const auto e) { return this->operator()(e); }, expr);
   }
 
-  std::optional<size_t> eval(const SpArea& expr) { return this->eval(expr.arg); }
+  std::optional<size_t> eval(const SpArea& expr) {
+    return this->eval(expr.arg);
+  }
   std::optional<size_t> eval(const FrameInterval& expr) {
     switch (expr.bound) {
-      case FrameInterval::OPEN: return expr.high - 1;
+      case FrameInterval::OPEN:
+        return expr.high - 1;
       case FrameInterval::LOPEN:
-      case FrameInterval::ROPEN: return expr.high;
-      case FrameInterval::CLOSED: return expr.high + 1;
+      case FrameInterval::ROPEN:
+        return expr.high;
+      case FrameInterval::CLOSED:
+        return expr.high + 1;
     }
   }
 
@@ -146,8 +150,12 @@ struct HorizonCompute {
       return this->eval(*(expr->phi));
     }
   }
-  std::optional<size_t> operator()(const PinPtr& expr) { return this->eval(expr->phi); }
-  std::optional<size_t> operator()(const NotPtr& e) { return this->eval(e->arg); }
+  std::optional<size_t> operator()(const PinPtr& expr) {
+    return this->eval(expr->phi);
+  }
+  std::optional<size_t> operator()(const NotPtr& e) {
+    return this->eval(e->arg);
+  }
   std::optional<size_t> operator()(const AndPtr& expr) {
     auto hrz1 = std::optional<size_t>{};
     for (const auto& e : expr->args) {
@@ -212,10 +220,11 @@ struct HorizonCompute {
   std::optional<size_t> operator()(const CompareSpAreaPtr& expr) {
     const auto lhs_hrz = this->eval(expr->lhs);
     const auto rhs_hrz = std::visit(
-        utils::overloaded{[](const double) -> std::optional<size_t> { return 0; },
-                          [&](const SpArea& e) {
-                            return this->eval(e);
-                          }},
+        utils::overloaded{
+            [](const double) -> std::optional<size_t> { return 0; },
+            [&](const SpArea& e) {
+              return this->eval(e);
+            }},
         expr->rhs);
     return max(lhs_hrz, rhs_hrz);
   }

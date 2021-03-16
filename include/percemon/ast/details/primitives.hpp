@@ -17,8 +17,14 @@ struct C_TIME {};
 /// Placeholder for current frame.
 struct C_FRAME {};
 
-using primitive_types =
-    std::variant<bool, long long int, double, std::string, C_TIME, C_FRAME>;
+using primitive_types = std::variant<
+    bool,
+    long long int,
+    unsigned long long int,
+    double,
+    std::string,
+    C_TIME,
+    C_FRAME>;
 
 /// @brief A constant in the AST.
 ///
@@ -43,6 +49,23 @@ struct Constant : primitive_types {
   /// Convenience method to check if the constant is a signed integer.
   [[nodiscard]] constexpr bool is_integer() const {
     return std::holds_alternative<long long int>(*this);
+  }
+
+  /// Convenience method to check if the constant is a signed integer.
+  [[nodiscard]] constexpr bool is_unsigned() const {
+    return std::holds_alternative<unsigned long long int>(*this);
+  }
+
+  [[nodiscard]] constexpr bool is_nonnegative() const {
+    if (is_unsigned()) {
+      return true;
+    } else if (is_integer()) {
+      return std::get<long long int>(*this) >= 0;
+    } else if (is_real()) {
+      return std::get<double>(*this) >= 0.0;
+    } else {
+      return false;
+    }
   }
 
   /// Convenience method to check if the constant is a `string`.

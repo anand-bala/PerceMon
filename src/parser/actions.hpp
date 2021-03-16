@@ -408,18 +408,37 @@ struct action<gm::PinningExpression> {
 };
 
 template <>
+struct action<gm::interval_ops> {
+  template <typename ActionInput>
+  static void apply(const ActionInput& in, GlobalContext&, Context& state) {
+    auto content    = in.string();
+    state.operation = std::move(content);
+  }
+};
+
+template <>
 struct action<gm::IntervalExpression> {
-  static void apply0(GlobalContext&, Context& state) {
+  template <typename ActionInput>
+  static void apply(const ActionInput& in, GlobalContext&, Context& state) {
     utils::assert_(
         state.operation.has_value(), "Expected an operation to have been parser");
+    utils::assert_(state.terms.size() == 2, "Expected exactly 2 Term as an operand");
+
     std::string operation = remove_opt_quick(state.operation);
-    utils::assert_(operation == "_", "Expected an '_' operation to create intervals");
-    utils::assert_(state.terms.size() == 1, "Expected exactly 1 Term as an operand");
-
-    ExprPtr term = std::move(state.terms.back());
-    state.terms.pop_back();
-
-    state.interval = Expr::Interval(std::move(term));
+    auto terms            = std::move(state.terms);
+    try {
+      if (operation == "_frame") { // Frame Interval
+        state.interval = Expr::FrameInterval(std::move(terms[0]), std::move(terms[1]));
+      } else if (operation == "_time") {
+        state.interval = Expr::TimeInterval(std::move(terms[0]), std::move(terms[1]));
+      } else { // this should be unreachable
+        utils::unreachable(
+            "Interval Expression parsed an operation that was not _frame or _time");
+      }
+    } catch (const std::invalid_argument& e) {
+      throw peg::parse_error(
+          fmt::format("Invalid Interval Expression: {}", e.what()), in);
+    }
   }
 };
 
@@ -995,8 +1014,8 @@ struct action<gm::Term> {
       // UPDATE 2021-01-26:
       //
       // Turns out, this is reachable if there is an empty "()" in the list of
-      // expressions. This means that we need to throw a parsing error, where we matched
-      // an empty list where it never makes sense to have one.
+      // expressions. This means that we need to throw a parsing error, where we
+      // matched an empty list where it never makes sense to have one.
       throw peg::parse_error(
           "Looks like a pair '(' ')' was matched with nothing in between", in);
       // utils::unreachable("Looks like a Term has no sub expression or identifier.");

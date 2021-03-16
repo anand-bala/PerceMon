@@ -89,7 +89,9 @@ struct KwSpatialForall : key<TAO_PEGTL_STRING("fills")> {};
 
 // Other
 struct KwPin : key<sym::atsign> {};
-struct KwInterval : key<sym::underscore> {};
+struct KwFrameInterval : key<TAO_PEGTL_STRING("_frame")> {};
+struct KwTimeInterval : key<TAO_PEGTL_STRING("_time")> {};
+using interval_ops = peg::sor<KwFrameInterval, KwTimeInterval>;
 
 using builtin_ops =
     peg::sor<KwSpatialExists, KwSpatialForall, KwExists, KwForall, KwOr, KwAnd, KwNot>;
@@ -347,7 +349,7 @@ struct PinningExpression : peg::seq<KwPin, Skip, VarList, Skip, Term> {};
 /// 1. Check if the operation is '_'
 /// 2. Check if there is exactly 1 Term in the `terms` list.
 /// 3. Create an Interval.
-struct IntervalExpression : peg::seq<KwInterval, Skip, Term> {};
+struct IntervalExpression : peg::seq<interval_ops, Skip, Constant, Skip, Constant> {};
 
 using quantifier_ops = peg::sor<KwExists, KwForall>;
 /// Rule to encode quantifier expressions.
