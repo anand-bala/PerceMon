@@ -19,7 +19,7 @@ struct C_FRAME;
 struct Constant;
 struct Variable;
 
-struct Function;
+struct ArithmeticFn;
 struct PinnedFrame;
 struct Interval;
 

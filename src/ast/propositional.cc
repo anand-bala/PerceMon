@@ -32,7 +32,7 @@ PredicateOp::PredicateOp(Type cmp, ExprPtr arg1, ExprPtr arg2) :
   constexpr auto if_valid_op = utils::overloaded{
       [](const Constant&) { return true; },
       [](const Variable&) { return true; },
-      [](const Function&) { return true; },
+      [](const ArithmeticFn&) { return true; },
       [](const SpatialOp& fn) { return fn.op == SpatialOp::Type::Area; },
       [](const auto&) {
         return false;
@@ -82,7 +82,7 @@ bool PredicateOp::is_time_interval() const {
   constexpr auto is_ok = utils::overloaded{
       [](const Constant&) { return true; },
       [](const Variable& var) { return var.is_frame() || var.is_timepoint(); },
-      [](const Function& fun) { return fun.is_time_interval(); },
+      [](const ArithmeticFn& fun) { return fun.is_time_interval(); },
       [](const auto&) { return false; },
   };
   bool lhs_ok = utils::visit(is_ok, *lhs);
@@ -123,7 +123,7 @@ LogicalOp::LogicalOp(Type operation, std::vector<ExprPtr> operands) :
         utils::overloaded{
             [](const Constant&) { return false; },
             [](const Variable&) { return false; },
-            [](const Function&) { return false; },
+            [](const ArithmeticFn&) { return false; },
             [](const SpatialOp&) { return false; },
             [](const SpatioTemporalOp&) { return false; },
             [](const auto&) { // Can be anything but the above.
@@ -213,7 +213,7 @@ QuantifierOp::QuantifierOp(
   bool arg_is_ok = utils::visit(
       utils::overloaded{
           [](const Constant&) { return false; },
-          [](const Function&) { return false; },
+          [](const ArithmeticFn&) { return false; },
           [](const SpatialOp&) { return false; },
           [](const SpatioTemporalOp&) { return false; },
           [](const auto&) { return true; },

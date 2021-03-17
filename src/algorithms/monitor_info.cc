@@ -56,7 +56,7 @@ struct HorizonCompute {
   Info operator()(const Node&) {
     static_assert(
         std::is_same_v<Node, Constant> || std::is_same_v<Node, Variable> ||
-        std::is_same_v<Node, PredicateOp> || std::is_same_v<Node, Function>);
+        std::is_same_v<Node, PredicateOp> || std::is_same_v<Node, ArithmeticFn>);
     // If you are using a Predicate or Function for intervals, don't... Use
     // ast::Interval instead as it is more clear for inferring time bounds. Use
     // predicates within subexpressions if you want to use the pinned variables.
@@ -95,6 +95,10 @@ struct HorizonCompute {
         interval.high != nullptr,
         "If interval was constructed properly, this should be true");
     utils::assert_(std::holds_alternative<Constant>(*interval.high));
+    double to_frames = 1.0; // Multiply with high to get number of frames.
+    if (interval.type == Interval::Type::Time) {
+      to_frames = this->fps;
+    }
     const auto high_expr        = std::get<Constant>(*interval.high);
     const utils::UintOrInf high = utils::visit(
         utils::overloaded{
@@ -102,7 +106,7 @@ struct HorizonCompute {
             [](const bool&) { return utils::UintOrInf{/*val*/ 0}; },
             [](const C_FRAME&) { return utils::UintOrInf{/*val*/ 0}; },
             [](const C_TIME&) { return utils::UintOrInf{/*val*/ 0}; },
-            [](const auto& c) { return utils::UintOrInf{/*val*/ c}; },
+            [to_frames](const auto& c) { return utils::UintOrInf{c * to_frames}; },
         },
         high_expr);
     return high;

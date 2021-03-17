@@ -61,7 +61,7 @@ TemporalOp::TemporalOp(
         utils::overloaded{
             [](const Constant&) { return false; },
             [](const Variable&) { return false; },
-            [](const Function&) { return false; },
+            [](const ArithmeticFn&) { return false; },
             [](const SpatialOp&) { return false; },
             [](const SpatioTemporalOp&) { return false; },
             [](const auto&) { // Can be anything but the above.

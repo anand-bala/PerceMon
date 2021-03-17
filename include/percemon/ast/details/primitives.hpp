@@ -17,14 +17,8 @@ struct C_TIME {};
 /// Placeholder for current frame.
 struct C_FRAME {};
 
-using primitive_types = std::variant<
-    bool,
-    long long int,
-    unsigned long long int,
-    double,
-    std::string,
-    C_TIME,
-    C_FRAME>;
+using primitive_types =
+    std::variant<bool, long long int, unsigned long long int, double, C_TIME, C_FRAME>;
 
 /// @brief A constant in the AST.
 ///
@@ -68,9 +62,8 @@ struct Constant : primitive_types {
     }
   }
 
-  /// Convenience method to check if the constant is a `string`.
-  [[nodiscard]] constexpr bool is_string() const {
-    return std::holds_alternative<std::string>(*this);
+  [[nodiscard]] constexpr bool is_arithmetic() const {
+    return is_bool() || is_integer() || is_unsigned() || is_real();
   }
 
   [[nodiscard]] std::string to_string() const;
@@ -89,10 +82,6 @@ struct Variable {
     Object,    ///< The variable is an object ID
     Frame,     ///< The variable is a frame placeholder.
     Timepoint, ///< The variable is a timepoint placeholder
-    Real,      ///< Real-valued (double) variables.
-    Int,       ///< Integer variables.
-    Bool,      ///< Boolean variables.
-    Custom,    ///< Used when the type is some custom type.
     Unknown,   ///< Used when we don't know the type and it needs to be inferred later.
   };
   /// The type of the variable.
@@ -101,21 +90,11 @@ struct Variable {
   /// of the type.
   std::optional<std::string> custom_type;
 
-  /// Scope of the varaible
-  ///
-  /// Local scope implies it has been declared within a Quantifier expression.
-  enum struct Scope { Local, Global };
-  Scope scope;
-
   Variable(
       std::string name_arg,
       Type type_arg,
-      std::optional<std::string> type_str = std::nullopt,
-      Scope scope_arg                     = Scope::Local) :
-      name{std::move(name_arg)},
-      type{type_arg},
-      custom_type{std::move(type_str)},
-      scope{scope_arg} {};
+      std::optional<std::string> type_str = std::nullopt) :
+      name{std::move(name_arg)}, type{type_arg}, custom_type{std::move(type_str)} {};
 
   [[nodiscard]] constexpr bool is_object() const {
     return type == Type::Object;
@@ -126,18 +105,6 @@ struct Variable {
   }
   [[nodiscard]] constexpr bool is_timepoint() const {
     return type == Type::Timepoint;
-  }
-  [[nodiscard]] constexpr bool is_bool() const {
-    return type == Type::Bool;
-  }
-  [[nodiscard]] constexpr bool is_real() const {
-    return type == Type::Real;
-  }
-  [[nodiscard]] constexpr bool is_integer() const {
-    return type == Type::Int;
-  }
-  [[nodiscard]] constexpr bool is_custom() const {
-    return type == Type::Custom;
   }
 
   [[nodiscard]] std::string to_string() const;

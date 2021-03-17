@@ -32,7 +32,7 @@ namespace percemon::ast::details {
 /// @brief Functions on `Constant`s, `Variable`s, and other `Function`s.
 ///
 /// This can refer to mathematical functions (excluding logical operations).
-struct Function {
+struct ArithmeticFn {
   enum struct Type { Add, Sub, Mul, Div, Dist, Offset, Class, Prob, Custom };
 
   Type fn;
@@ -40,26 +40,26 @@ struct Function {
   std::vector<ExprPtr> args;
   std::set<Attribute, Attribute::KeyCompare> attrs;
 
-  Function(
+  ArithmeticFn(
       Type op,
       std::optional<std::string> op_str,
       std::vector<ExprPtr> operands,
       std::set<Attribute, Attribute::KeyCompare> attributes);
 
-  Function(Type op, std::vector<ExprPtr> operands) :
-      Function{op, std::nullopt, std::move(operands), {}} {}
+  ArithmeticFn(Type op, std::vector<ExprPtr> operands) :
+      ArithmeticFn{op, std::nullopt, std::move(operands), {}} {}
 
-  Function(
+  ArithmeticFn(
       Type op,
       std::vector<ExprPtr> operands,
       std::set<Attribute, Attribute::KeyCompare> attributes) :
-      Function{op, std::nullopt, std::move(operands), std::move(attributes)} {}
+      ArithmeticFn{op, std::nullopt, std::move(operands), std::move(attributes)} {}
 
-  Function(
+  ArithmeticFn(
       std::string op,
       std::vector<ExprPtr> operands,
       std::set<Attribute, Attribute::KeyCompare> attributes) :
-      Function{
+      ArithmeticFn{
           Type::Custom,
           std::move(op),
           std::move(operands),
@@ -88,9 +88,6 @@ struct Function {
         return false;
     }
   }
-
-  /// Check if the syntax tree contains only operations on Time variables or constants.
-  [[nodiscard]] bool is_time_interval() const;
 
   [[nodiscard]] bool is_custom() const {
     return fn == Type::Custom;

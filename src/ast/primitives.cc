@@ -14,7 +14,6 @@ namespace ast::details {
 std::string Constant::to_string() const {
   return utils::visit(
       utils::overloaded{
-          [](const std::string& s) { return fmt::format("\"{}\"", s); },
           [](const C_TIME&) { return fmt::format("C_TIME"); },
           [](const C_FRAME&) { return fmt::format("C_FRAME"); },
           [](auto c) { return fmt::format("{}", c); },

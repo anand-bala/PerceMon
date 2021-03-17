@@ -50,8 +50,8 @@ struct hash<Variable> {
 };
 
 template <>
-struct hash<Function> {
-  size_t operator()(const Function&) const;
+struct hash<ArithmeticFn> {
+  size_t operator()(const ArithmeticFn&) const;
 };
 
 template <>
@@ -116,7 +116,10 @@ struct hash<Attribute> {
 
 /// A constant is hashed by it's value
 size_t hash<Constant>::operator()(const Constant& expr) const {
-  return std::hash<primitive_types>{}(static_cast<const primitive_types&>(expr));
+  size_t result = hash<std::string_view>{}("constant");
+  hash_combine(
+      result, std::hash<primitive_types>{}(static_cast<const primitive_types&>(expr)));
+  return result;
 }
 
 /// A variable is hashed by it's name and type.
@@ -129,7 +132,7 @@ size_t hash<Variable>::operator()(const Variable& expr) const {
 
 /// A function is hashed by its type/name, the hashes of its arguments, and that of
 /// its attributes.
-size_t hash<Function>::operator()(const Function& expr) const {
+size_t hash<ArithmeticFn>::operator()(const ArithmeticFn& expr) const {
   size_t result = expr.custom_fn.has_value()
                       ? std::hash<std::string>{}(*expr.custom_fn)
                       : std::hash<std::string_view>{}(magic_enum::enum_name(expr.fn));
@@ -221,6 +224,11 @@ size_t hash<SpatialQuantifier>::operator()(const SpatialQuantifier& expr) const 
 /// type and then call the associated hash function. This is easier than writing your
 /// own variant hash (commented below) as we shouldn't deal with magic numbers.
 size_t hash<Expr>::operator()(const Expr& expr) const {
+  // If the expression already has an ID != 0, then we have probably already computed
+  // the hash (as m_id is private).
+  if (expr.id() != 0) {
+    return expr.id();
+  }
   std::size_t result = std::hash<ast::details::ExprVariant>{}(
       static_cast<const ast::details::ExprVariant&>(expr));
   // expr.valueless_by_exception()

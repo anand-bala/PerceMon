@@ -23,22 +23,21 @@
 namespace percemon::datastream {
 
 constexpr double DEFAULT_FPS = 30.0;
-
-// TODO: Euclidean Distance between boxes
-// TODO: Lat and Lon distances between boxes.
+constexpr auto NS_PER_S      = 1000ULL * 1000ULL * 1000ULL;
 
 /// Timestamp type compatible with ROS Time.
 struct TimeStamp {
  private:
-  std::uint32_t m_sec;
-  std::uint32_t m_nanosec;
+  std::uint64_t m_nanosec;
 
  public:
-  TimeStamp(std::uint32_t seconds, std::uint32_t nanoseconds) :
-      m_sec{seconds}, m_nanosec{nanoseconds} {}
+  TimeStamp(std::uint32_t seconds, std::uint32_t nanoseconds) {
+    m_nanosec = seconds * NS_PER_S;
+    m_nanosec += nanoseconds;
+  }
 
   constexpr bool operator==(const TimeStamp& rhs) const {
-    return m_sec == rhs.m_sec && m_nanosec == rhs.m_nanosec;
+    return m_nanosec == rhs.m_nanosec;
   }
 
   constexpr bool operator!=(const TimeStamp& rhs) const {
@@ -46,11 +45,11 @@ struct TimeStamp {
   }
 
   constexpr bool operator<(const TimeStamp& rhs) const {
-    return m_sec < rhs.m_sec || (m_sec == rhs.m_sec && m_nanosec < rhs.m_nanosec);
+    return m_nanosec < rhs.m_nanosec;
   }
 
   constexpr bool operator<=(const TimeStamp& rhs) const {
-    return m_sec < rhs.m_sec || (m_sec == rhs.m_sec && m_nanosec <= rhs.m_nanosec);
+    return m_nanosec <= rhs.m_nanosec;
   }
 
   constexpr bool operator>=(const TimeStamp& rhs) const {
@@ -59,6 +58,10 @@ struct TimeStamp {
 
   constexpr bool operator>(const TimeStamp& rhs) const {
     return !(*this <= rhs);
+  }
+
+  [[nodiscard]] constexpr double seconds() const {
+    return static_cast<double>(m_nanosec) / static_cast<double>(NS_PER_S);
   }
 };
 

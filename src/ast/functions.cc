@@ -18,7 +18,7 @@ namespace percemon {
 
 namespace ast::details {
 
-Function::Function(
+ArithmeticFn::ArithmeticFn(
     Type op,
     std::optional<std::string> op_str,
     std::vector<ExprPtr> operands,
@@ -49,7 +49,7 @@ Function::Function(
   validate();
 }
 
-void Function::validate() const {
+void ArithmeticFn::validate() const {
   // First, we check the number of args.
   std::optional<size_t> nargs = {};
   switch (fn) {
@@ -101,7 +101,7 @@ void Function::validate() const {
     auto is_valid = utils::overloaded{
         [](const Constant&) { return true; },
         [](const Variable&) { return true; },
-        [](const Function&) { return true; },
+        [](const ArithmeticFn&) { return true; },
         [](const auto&) {
           return false;
         }};
@@ -116,7 +116,7 @@ void Function::validate() const {
   }
 }
 
-std::string Function::to_string() const {
+std::string ArithmeticFn::to_string() const {
   std::string_view op;
   switch (fn) {
     case Type::Custom:
@@ -157,7 +157,7 @@ std::string Function::to_string() const {
       "({} {} {})", op, fmt::join(args_str, " "), fmt::join(attr_str, " "));
 }
 
-bool Function::is_time_interval() const {
+bool ArithmeticFn::is_time_interval() const {
   /// Check if this is a function on objects
   if (is_object_op()) {
     return false;
@@ -173,7 +173,7 @@ bool Function::is_time_interval() const {
                          [](const Variable& var) {
                            return var.is_timepoint() || var.is_frame();
                          },
-                         [](const Function& fun) { return fun.is_time_interval(); },
+                         [](const ArithmeticFn& fun) { return fun.is_time_interval(); },
                          [](const auto&) { return false; },
                      },
                      op);
@@ -222,7 +222,7 @@ PinnedFrame::PinnedFrame(ExprPtr time_v, ExprPtr frame_v, ExprPtr subexpr) :
       utils::overloaded{
           [](const Constant&) { return false; },
           [](const Variable&) { return false; },
-          [](const Function&) { return false; },
+          [](const ArithmeticFn&) { return false; },
           [](const SpatialOp&) { return false; },
           [](const SpatioTemporalOp&) { return false; },
           [](const auto&) { // Can be anything but the above.
@@ -337,8 +337,8 @@ std::string Interval::to_string() const {
 
 } // namespace ast::details
 
-ExprPtr Expr::Function(ast::FnType op, ExprPtrContainer args, AttrContainer attrs) {
-  return make_expr(ast::details::Function{op, std::move(args), std::move(attrs)});
+ExprPtr Expr::ArithmeticFn(ast::FnType op, ExprPtrContainer args, AttrContainer attrs) {
+  return make_expr(ast::details::ArithmeticFn{op, std::move(args), std::move(attrs)});
 }
 
 ExprPtr Expr::Function(
@@ -348,43 +348,44 @@ ExprPtr Expr::Function(
   auto fntype = magic_enum::enum_cast<ast::FnType>(op);
   if (fntype.has_value()) {
     if (*fntype != ast::FnType::Custom) {
-      return Function(*fntype, std::move(args), std::move(attrs));
+      return ArithmeticFn(*fntype, std::move(args), std::move(attrs));
     }
   }
-  return make_expr(percemon::ast::details::Function{
+  return make_expr(percemon::ast::details::ArithmeticFn{
       std::move(op), std::move(args), std::move(attrs)});
 }
 
 ExprPtr Expr::Dist(ExprPtr x, ExprPtr y, AttrContainer attrs) {
-  return Function(ast::FnType::Dist, {std::move(x), std::move(y)}, std::move(attrs));
+  return ArithmeticFn(
+      ast::FnType::Dist, {std::move(x), std::move(y)}, std::move(attrs));
 }
 
 ExprPtr Expr::Offset(ExprPtr x, AttrContainer attrs) {
-  return Function(ast::FnType::Offset, {std::move(x)}, std::move(attrs));
+  return ArithmeticFn(ast::FnType::Offset, {std::move(x)}, std::move(attrs));
 }
 
 ExprPtr Expr::Class(ExprPtr obj) {
-  return Function(ast::FnType::Class, {std::move(obj)}, {});
+  return ArithmeticFn(ast::FnType::Class, {std::move(obj)}, {});
 }
 
 ExprPtr Expr::Prob(ExprPtr obj) {
-  return Function(ast::FnType::Prob, {std::move(obj)}, {});
+  return ArithmeticFn(ast::FnType::Prob, {std::move(obj)}, {});
 }
 
 ExprPtr Expr::Add(std::vector<ExprPtr> args) {
-  return Function(ast::FnType::Add, std::move(args), {});
+  return ArithmeticFn(ast::FnType::Add, std::move(args), {});
 }
 
 ExprPtr Expr::Mul(std::vector<ExprPtr> args) {
-  return Function(ast::FnType::Mul, std::move(args), {});
+  return ArithmeticFn(ast::FnType::Mul, std::move(args), {});
 }
 
-ExprPtr Expr::Subtract(ExprPtr lhs, ExprPtr rhs) {
-  return Function(ast::FnType::Sub, {std::move(lhs), std::move(rhs)}, {});
+ExprPtr Expr::Sub(ExprPtr lhs, ExprPtr rhs) {
+  return ArithmeticFn(ast::FnType::Sub, {std::move(lhs), std::move(rhs)}, {});
 }
 
 ExprPtr Expr::Div(ExprPtr num, ExprPtr den) {
-  return Function(ast::FnType::Div, {std::move(num), std::move(den)}, {});
+  return ArithmeticFn(ast::FnType::Div, {std::move(num), std::move(den)}, {});
 }
 
 ExprPtr Expr::PinAt(ExprPtr time_var, ExprPtr frame_var, ExprPtr subexpr) {

@@ -17,6 +17,7 @@
 #include "percemon/ast/expression.hpp"
 
 #include "utils/static_analysis_helpers.hpp"
+#include "utils/visit.hpp"
 
 #include <fmt/core.h>
 #include <magic_enum.hpp>
@@ -306,14 +307,19 @@ struct action<gm::VarDecl> {
   static void apply(const ActionInput& in, GlobalContext&, Context& ctx) {
     utils::assert_(
         ctx.var_name.has_value(), "Expected a variable name to have been parsed");
-    std::string var_name     = remove_opt_quick(ctx.var_name);
-    std::string var_type_str = remove_opt_quick(ctx.var_type);
-    auto var_type            = magic_enum::enum_cast<ast::VarType>(var_type_str);
-    if (!var_type.has_value()) {
-      throw peg::parse_error(
-          fmt::format("Unknown Variable type: `{}`", var_type_str), in);
+    std::string var_name  = remove_opt_quick(ctx.var_name);
+    ast::VarType var_type = ast::VarType::Unknown;
+    if (ctx.var_type.has_value()) {
+      std::string var_type_str = remove_opt_quick(ctx.var_type);
+      auto var_type_p          = magic_enum::enum_cast<ast::VarType>(var_type_str);
+      if (!var_type_p.has_value()) {
+        throw peg::parse_error(
+            fmt::format("Unknown Variable type: `{}`", var_type_str), in);
+      } else {
+        var_type = *var_type_p;
+      }
     }
-    auto variable = Expr::Variable(var_name, *var_type);
+    auto variable = Expr::Variable(var_name, var_type);
     ctx.variables.push_back(std::move(variable));
   }
 };
@@ -711,7 +717,7 @@ struct action<gm::OperationExpression> {
         state.result = Expr::Xor(arg0, arg1);
         return;
       case KnownOps::SUB:
-        state.result = Expr::Subtract(arg0, arg1);
+        state.result = Expr::Sub(arg0, arg1);
         return;
       case KnownOps::DIV:
         state.result = Expr::Div(arg0, arg1);
@@ -860,7 +866,7 @@ struct action<gm::OperationExpression> {
 
     if (!op.has_value()) {
       auto options = AttrContainer{state.attributes.begin(), state.attributes.end()};
-      state.result = Expr::Function(
+      state.result = Expr::ArithmeticFn(
           ast::FnType::Custom, std::move(state.terms), std::move(options));
       return;
     }
@@ -1006,6 +1012,21 @@ struct action<gm::Term> {
             fmt::format("Reference to unknown identifier: `{}`", id), in);
       } else {
         state.terms.push_back(it->second);
+      }
+    } else if (!state.constants.empty()) { // we have constant
+      auto constants = std::move(state.constants);
+      utils::assert_(
+          constants.size() == 1, "Term should have parsed exactly 1 Constant");
+      if (std::holds_alternative<std::string>(constants.back())) {
+        throw peg::parse_error("Strings currently cannot be terms", in);
+      } else {
+        ExprPtr c = utils::visit(
+            utils::overloaded{
+                [](const std::string&) { return Expr::Constant(/*constant*/ 0.0); },
+                [](const auto& c) { return Expr::Constant(c); },
+            },
+            constants.back());
+        state.terms.push_back(std::move(c));
       }
     } else {
       // Otherwise, it doesn't make sense that there are no results, as this

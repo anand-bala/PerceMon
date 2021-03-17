@@ -28,7 +28,7 @@ namespace percemon {
 namespace ast {
 
 using VarType               = details::Variable::Type;
-using FnType                = details::Function::Type;
+using FnType                = details::ArithmeticFn::Type;
 using CmpOp                 = details::PredicateOp::Type;
 using LogicOpType           = details::LogicalOp::Type;
 using QuantifierType        = details::QuantifierOp::Type;
@@ -45,7 +45,7 @@ namespace details {
 using ExprVariant = std::variant<
     Constant,
     Variable,
-    Function,
+    ArithmeticFn,
     PredicateOp,
     LogicalOp,
     QuantifierOp,
@@ -98,7 +98,8 @@ struct Expr : ast::details::ExprVariant {
   static ExprPtr Variable(std::string name, ast::VarType type);
 
   /// @brief Create a pre-defined function, with given arguments and attributes
-  static ExprPtr Function(ast::FnType op, ExprPtrContainer args, AttrContainer attrs);
+  static ExprPtr
+  ArithmeticFn(ast::FnType op, ExprPtrContainer args, AttrContainer attrs);
 
   /// @brief Create a custom function, with given arguments and attributes
   static ExprPtr Function(std::string op, ExprPtrContainer args, AttrContainer attrs);
@@ -122,7 +123,7 @@ struct Expr : ast::details::ExprVariant {
   static ExprPtr Mul(ExprPtrContainer args);
 
   /// @brief Create an Subtraction AST
-  static ExprPtr Subtract(ExprPtr lhs, ExprPtr rhs);
+  static ExprPtr Sub(ExprPtr lhs, ExprPtr rhs);
 
   /// @brief Create an Division AST
   static ExprPtr Div(ExprPtr numerator, ExprPtr denominator);
